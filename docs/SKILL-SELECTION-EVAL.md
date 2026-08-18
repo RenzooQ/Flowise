@@ -54,6 +54,41 @@ Three things worth drawing out:
 The 39 negative-owner prompts are the hard set by construction — upstream wrote them to _look_ like
 they belong to another skill. 87% first-choice on adversarial cases is a good number.
 
+## Validity check 2: does this predict a REAL Flowise agent?
+
+The stronger objection to the headline number is not name matching, it is _methodology_: blind
+selectors reasoning over a description list are not the same thing as a real agent holding 24
+`StructuredTool` instances, bound to a real model through LangChain’s tool-calling path. If the two
+diverge, 95.7% is misleading.
+
+So a stratified sample of the same labelled prompts was run through the **real chain**
+(`ChatOpenRouter` → `ToolAgent` → `AgentSkills`, from `dist/`) against a live Claude model. The
+sample was deliberately stacked against the method: **every one of the five prompts the blind eval
+got wrong**, plus twelve it got right.
+
+```
+scored                          16 of 17   (one case errored in the harness)
+blind vs real agreement         15/16   93.8%
+
+where the blind eval was RIGHT  11/11  still right in the real path
+where the blind eval was WRONG   1/5   recovered by the real path
+
+the single disagreement:  expected shipping-and-launch
+                          blind NONE  ->  real shipping-and-launch   (real path did BETTER)
+```
+
+**Every case the blind method got right, the real agent also got right — 11 of 11.** The one
+divergence went in the favourable direction. The blind methodology is therefore a faithful and
+slightly _conservative_ predictor of production behaviour, and 95.7% stands as published.
+
+The run also confirms the routing gaps below are genuine production behaviour rather than artifacts
+of blind selection: the `ci-cd-and-automation` → `debugging-and-error-recovery` misroute reproduced
+exactly, three times out of three, in a live agent.
+
+⚠️ **Do not compare the 12/16 (75%) raw hit rate of this sample to the 95.7% headline.** This sample
+is 5/17 known-bad by construction; it was chosen to stress the method, not to measure accuracy. The
+meaningful figures here are the agreement rate and the 11/11.
+
 ## Validity check: is this just name matching?
 
 A fair objection to the headline number: many fixture prompts contain words from the target skill's

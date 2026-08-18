@@ -67,6 +67,55 @@ describe('vendored skills library', () => {
         })
     })
 
+    describe('the pinned upstream SHA is stated consistently', () => {
+        // VENDOR.md's re-vendor procedure says "update the commit SHA and fetch date in the table
+        // above" — one file. The SHA is actually written in seven, 37 times, including the NOTICE
+        // and the README. Following that procedure to the letter leaves 36 stale references
+        // claiming provenance the tree no longer has, which is exactly the kind of quiet
+        // inaccuracy a licence notice must not carry. This makes the copies self-checking, so the
+        // procedure only has to be right about VENDOR.md.
+        const REPO = path.join(__dirname, '..', '..', '..', '..', '..')
+
+        /** Files that state the provenance SHA. Extend this if another one starts quoting it. */
+        const CLAIMANTS = [
+            'NOTICE',
+            'README.md',
+            path.join('docs', 'INTEGRATION_PLAN.md'),
+            path.join('docs', 'SKILL-SELECTION-EVAL.md'),
+            path.join('docs', 'skills-catalog.json'),
+            path.join('docs', 'skills-format.md')
+        ]
+
+        const vendorText = fs.readFileSync(path.join(LIBRARY, 'VENDOR.md'), 'utf8')
+        const pinned = (/\b([0-9a-f]{40})\b/.exec(vendorText) || [])[1]
+
+        it('VENDOR.md pins a full 40-character SHA', () => {
+            expect(pinned).toMatch(/^[0-9a-f]{40}$/)
+        })
+
+        it.each(CLAIMANTS)('%s quotes only that SHA', (relative) => {
+            const full = path.join(REPO, relative)
+            if (!fs.existsSync(full)) return // the doc set may be trimmed; absence is not a mismatch
+            const text = fs.readFileSync(full, 'utf8')
+
+            // Full 40-char forms must match exactly.
+            for (const [, sha] of text.matchAll(/\b([0-9a-f]{40})\b/g)) {
+                expect(sha).toBe(pinned)
+            }
+            // Abbreviated forms must be a prefix of it. Bounded to 7-12 chars and required to
+            // contain a digit, so ordinary words like "deadbeef" or "added" are not swept in.
+            for (const [, short] of text.matchAll(/\b([0-9a-f]{7,12})\b/g)) {
+                if (!/\d/.test(short)) continue
+                if (!pinned.startsWith(short) && short !== pinned.slice(0, short.length)) {
+                    // Only fail on strings that look like they are TRYING to be this SHA.
+                    if (pinned.startsWith(short.slice(0, 4))) {
+                        throw new Error(`${relative} quotes "${short}", which is not a prefix of the pinned ${pinned}`)
+                    }
+                }
+            }
+        })
+    })
+
     describe('a skill is text, never code', () => {
         // The whole trust story depends on this tree holding nothing that could be executed. A
         // future re-vendor that sweeps in a script should fail here rather than ship.

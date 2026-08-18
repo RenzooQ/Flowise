@@ -143,6 +143,44 @@ find packages/components/skills-library -name '*.sh' -o -name '*.js' -o -name '*
 git diff --stat -- packages/components/skills-library        -> empty (vendored content unmutated)
 ```
 
+## Re-run against a REAL Claude model (2026-08-18)
+
+Everything above used a deterministic stub, because no API key was available. That is no longer
+the limitation it was: the same e2e was re-run end to end against a genuine Claude model, driven
+through a purpose-built OpenAI-compatible bridge over the Claude Code CLI (no API key — it uses
+the existing subscription login). **All assertions green.**
+
+```
+tools called: ["spec-driven-development"]          <- elected unprompted, from 24 tools
+the answer echoes the loaded skill instructions    <- echoed: Tech Stack, Project Structure, Code Style
+envelope intact, REFERENCE MATERIAL framing present, skill named
+observation contains real vendored text ("## Overview")
+
+targeted dispatch: attempt 1 of 3 -> ["test-driven-development"]
+returned body matches the vendored SKILL.md byte-for-byte (15,970 chars)
+
+RESULT: PASS
+```
+
+The second line is the one that matters, and it is a genuinely stronger claim than anything the
+stub could support. The assertion no longer greps for the word "skill" — it pulls the multi-word
+`##` headings out of whichever skill the agent actually loaded and requires the final answer to
+echo one. The agent reproduced **three** of `spec-driven-development`’s own section names, having
+asked first about payment processors, PCI-DSS scope and capability decomposition. That is what
+"the agent followed the skill" looks like, rather than "the agent mentioned skills".
+
+The named-skill case now runs up to **3 attempts and passes on ≥1**, which is the bar
+`MASTER_PROMPT.md` sets for a nondeterministic e2e. It succeeded on the first attempt.
+
+Two honest caveats. Tool calling through the bridge is **prompt-driven** — the model is asked to
+emit JSON naming a tool, rather than using a provider-side function-calling API — so a malformed
+reply degrades to a plain answer instead of a tool call. And each call takes 30–60 seconds,
+because every request spawns a CLI process. Neither affects what is being proven here, but both
+mean this is a development and test path, not a production one.
+
+The bridge, its wiring instructions and its limits live outside this repository, in the parent
+project at `tools/claude-bridge/`.
+
 ## Verified from a pristine clone
 
 Everything above was measured in a working tree that had been built up incrementally, which cannot

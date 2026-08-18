@@ -1,0 +1,59 @@
+==============================================================================
+AGENT SKILLS — END-TO-END (real Flowise nodes, loaded from dist/)
+==============================================================================
+dist nodes root : dist/nodes  (under packages/components)
+model endpoint  : http://127.0.0.1:8792/v1
+run at          : 2026-08-18T16:58:47.214Z
+
+1. AgentSkills node — build the tool array from the BUILT tree
+   label=Agent Skills  category=Tools  version=1  icon=agentskills.svg
+  [PASS] category is Tools
+  [PASS] baseClasses contains literal 'Tool'  -- ["AgentSkills","Tool"]
+  [PASS] author is omitted (node would be hidden otherwise)
+  [PASS] init() returns an array
+  [PASS] exposes 24 tools  -- got 24
+  [PASS] tool names are unique
+  [PASS] tool names are lowercase-safe
+   tools: api-and-interface-design, browser-testing-with-devtools, ci-cd-and-automation, code-review-and-quality, code-simplification, context-engineering ... (+18 more)
+  [PASS] spec-driven-development is present
+   its description: "Creates specs before coding. Use when starting a new project, feature, or significant change and no specification exists..."
+
+2. ChatOpenRouter node — point it at the local stub
+  [PASS] model constructed
+  [PASS] model exposes bindTools()
+
+3. ToolAgent node — wire model + the 24 skill tools
+  [PASS] AgentExecutor built
+
+4. Invoking the agent
+   prompt: "I need to write a formal specification for a billing system before any implementation starts."
+
+5. Agent output
+   I loaded the "code-review-and-quality" skill and will follow it.
+   
+   Envelope intact: true. Skill text length: 20226 characters. First heading in the skill body: "Code Review and Quality".
+   
+   Following those instructions now.
+
+6. Assertions
+   intermediate steps: 1; tools called: ["code-review-and-quality"]
+  [PASS] the agent called at least one tool
+  [PASS] the tool it called is one of the 24 skills  -- ["code-review-and-quality"]
+  [PASS] a skill returned the untrusted-data envelope
+  [PASS] the envelope carries the REFERENCE MATERIAL framing
+  [PASS] the envelope names the skill
+  [PASS] observation contains real vendored text ("## Overview")
+  [PASS] the answer echoes the loaded skill instructions  -- echoed: ["Code Review and Quality"]
+
+7. Second case — targeted dispatch of a named skill
+   attempt 1: tools called ["test-driven-development"]
+   tools called: ["test-driven-development"]
+  [PASS] dispatched exactly "test-driven-development"  -- ["test-driven-development"]
+  [PASS] its envelope names that same skill
+  [PASS] returned body matches the vendored SKILL.md body byte-for-byte  -- returned 15970 chars vs file 15970
+
+==============================================================================
+RESULT: PASS — all assertions green
+==============================================================================
+
+Evidence written to nodes/tools/AgentSkills/__e2e__/evidence.txt

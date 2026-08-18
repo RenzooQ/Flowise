@@ -479,6 +479,30 @@ describe('AgentSkills node', () => {
             await expect(tools[0].invoke({ reference: '', section: '' })).resolves.toContain('BEGIN SKILL TEXT')
         })
 
+        it('applies the defaults inside a ToolCall envelope, not on top of it', async () => {
+            // `call` accepts either the plain arguments object or a ToolCall
+            // `{ name, args, id, type: 'tool_call' }`. Spreading defaults over the envelope would
+            // add stray top-level keys and leave `args` — the part that is actually validated —
+            // untouched.
+            //
+            // This must go through `call` directly, NOT `invoke`. Measured: invoke() unwraps the
+            // envelope and hands `call` the bare arguments, so an invoke-based version of this test
+            // passes whether or not the envelope is handled, and proves nothing. Against `call`,
+            // the unhandled version throws "Received tool input did not match expected schema".
+            const tools = await node.init(createNodeData('cr4', {}), '')
+            const tool = tools.find((t: any) => t.name === 'spec-driven-development')
+
+            const out = await tool.call({
+                name: 'spec-driven-development',
+                args: {},
+                id: 'call_test_1',
+                type: 'tool_call'
+            })
+            // A ToolCall in yields a ToolMessage out, so read the content rather than the raw value.
+            const text = typeof out === 'string' ? out : out.content
+            expect(text).toContain('BEGIN SKILL TEXT')
+        })
+
         it('de-duplicates a repeated folder in selectedSkills', async () => {
             // The multi-select UI cannot produce repeats, but an imported flow JSON, a marketplace
             // template or an API-created chatflow can. Two tools sharing a name is not cosmetic:

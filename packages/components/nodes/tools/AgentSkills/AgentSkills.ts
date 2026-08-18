@@ -96,8 +96,16 @@ class AgentSkillTool extends StructuredTool {
      * what strict mode rejects. This keeps the schema strict for the model and forgiving at runtime.
      */
     async call(arg: any, configArg?: any, tags?: any): Promise<any> {
-        const withDefaults = arg && typeof arg === 'object' && !Array.isArray(arg) ? { section: '', reference: '', ...arg } : arg
-        return super.call(withDefaults, configArg, tags)
+        // `call` accepts two shapes: the plain arguments object, or a ToolCall envelope
+        // `{ name, args, id, type: 'tool_call' }`. The defaults belong to the ARGUMENTS in both
+        // cases. Spreading them over an envelope would add stray top-level keys and leave the
+        // arguments — the thing that actually gets validated — untouched.
+        const isPlainObject = (value: any): boolean => !!value && typeof value === 'object' && !Array.isArray(value)
+        const withDefaults = (input: any): any => (isPlainObject(input) ? { section: '', reference: '', ...input } : input)
+
+        const next = isPlainObject(arg) && arg.type === 'tool_call' ? { ...arg, args: withDefaults(arg.args) } : withDefaults(arg)
+
+        return super.call(next, configArg, tags)
     }
 
     async _call({ section, reference }: z.infer<typeof this.schema>): Promise<string> {

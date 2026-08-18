@@ -229,6 +229,7 @@ const indexOneSkill = async (skillsDir: string, folder: string, warnings: string
         title: parsed.title,
         absolutePath,
         sections: parsed.sections,
+        references: parsed.references,
         sizeBytes: stats.size
     }
 }
@@ -322,77 +323,121 @@ export const clearSkillIndexCache = (): void => {
 }
 
 /**
- * Read one skill's post-frontmatter body, on demand. Re-reads and re-parses the file rather than
- * consulting any cache, which is what makes a live edit to a skill visible on the next call.
+ * Read a file the subsystem has already decided it is willing to open, applying every guard at the
+ * moment of reading rather than trusting the index.
+ *
+ * The index is cached for SKILL_INDEX_TTL_MS, so a file can be grown or replaced in between; without
+ * re-checking here the stated 1 MB bound is simply untrue at the moment content is served.
+ *
+ * Checked and read through ONE descriptor. The original form did lstat(path) then readFile(path) —
+ * two independent resolutions of the same name with a window between them, and readFile follows
+ * symlinks even though lstat had just refused one. Anything able to write into the directory could
+ * swap the entry in that window and be served a file the guards had approved under a different
+ * identity. Opening once and using fstat removes the second resolution: the bytes read are provably
+ * the bytes that were checked.
+ *
+ * The symlink refusal must happen on the PATH, before the open. Once a descriptor exists it refers
+ * to the target, so fstat reports an ordinary regular file and isSymbolicLink() is false — checking
+ * only the handle would silently stop refusing symlinks altogether. O_NOFOLLOW folds that refusal
+ * into the open atomically where it exists; it does not on Windows (fs.constants.O_NOFOLLOW is
+ * undefined there, verified), so there the lstat carries it.
+ *
+ * @param label how to name this file in an error a chat end user may see. Never the absolute path.
  */
-export const loadSkillBody = async (meta: SkillMeta): Promise<string> => {
-    // The index-time size and symlink guards are re-applied here, not trusted from the index. The
-    // index is cached for SKILL_INDEX_TTL_MS, so a file can be grown or replaced with a symlink in
-    // between; without this the stated 1 MB bound is simply untrue at the moment the body is served.
-    //
-    // Checked and read through ONE file handle rather than by path. The previous form did lstat(path)
-    // then readFile(path) — two independent resolutions of the same name, with a window between them,
-    // and readFile follows symlinks even though lstat had just refused one. Anything able to write
-    // into the skills directory could swap the entry in that window and be served a file the guards
-    // had already approved under a different identity. Opening once and using fstat on the descriptor
-    // removes the second resolution: the bytes read are provably the bytes that were checked.
-    //
-    // The symlink refusal has to happen on the PATH, before the open. Once a descriptor exists it
-    // refers to the target, so fstat reports a perfectly ordinary regular file and isSymbolicLink()
-    // is false — checking only the handle would silently stop refusing symlinks altogether.
-    //
-    // O_NOFOLLOW folds that refusal into the open itself, atomically. It does not exist on Windows
-    // (fs.constants.O_NOFOLLOW is undefined there, verified on this host), so on Windows the lstat
-    // below is what carries the guarantee, with the same small window the previous implementation
-    // had. Everything after the open — size and content — is read through the descriptor, so the
-    // bytes served are provably the bytes that were measured.
-    const lstats = await fs.promises.lstat(meta.absolutePath).catch((error: NodeJS.ErrnoException) => {
-        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" could not be read (${error?.code || 'read error'}).`)
+const readGuardedFile = async (absolutePath: string, label: string): Promise<string> => {
+    const lstats = await fs.promises.lstat(absolutePath).catch((error: NodeJS.ErrnoException) => {
+        throw new Error(`Agent Skills: "${label}" could not be read (${error?.code || 'read error'}).`)
     })
     if (lstats.isSymbolicLink()) {
-        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is a symbolic link and was not read.`)
+        throw new Error(`Agent Skills: "${label}" is a symbolic link and was not read.`)
     }
 
     const noFollow = typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0
     let handle: fs.promises.FileHandle
     try {
-        handle = await fs.promises.open(meta.absolutePath, fs.constants.O_RDONLY | noFollow)
+        handle = await fs.promises.open(absolutePath, fs.constants.O_RDONLY | noFollow)
     } catch (error) {
         const code = (error as NodeJS.ErrnoException)?.code
         // ELOOP is what O_NOFOLLOW raises when the name became a symlink after the lstat above.
         if (code === 'ELOOP') {
-            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is a symbolic link and was not read.`)
+            throw new Error(`Agent Skills: "${label}" is a symbolic link and was not read.`)
         }
-        // ENOENT here means the file vanished between indexing and this call, which is ordinary
-        // rather than exceptional. Name the skill, and do not leak the absolute server path.
-        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" could not be opened (${code || 'read error'}).`)
+        throw new Error(`Agent Skills: "${label}" could not be opened (${code || 'read error'}).`)
     }
 
     try {
         const stats = await handle.stat()
         if (!stats.isFile()) {
-            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is not a regular file and was not read.`)
+            throw new Error(`Agent Skills: "${label}" is not a regular file and was not read.`)
         }
         if (stats.size > MAX_SKILL_FILE_BYTES) {
-            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is ${stats.size} bytes, above the ${MAX_SKILL_FILE_BYTES}-byte limit.`)
+            throw new Error(`Agent Skills: "${label}" is ${stats.size} bytes, above the ${MAX_SKILL_FILE_BYTES}-byte limit.`)
         }
         // A hard link passes every check above deterministically — it IS a regular file, with no
-        // symlink to detect and no race to win — so link count is the only signal that this name
-        // may also live outside the skills directory. It is a warning rather than a refusal: a
-        // backup tool or a deduplicating filesystem can raise nlink on a perfectly legitimate file,
-        // and the parser already requires skill-shaped frontmatter, which is what actually stops an
-        // arbitrary file being served here.
+        // symlink to detect and no race to win — so link count is the only available signal that
+        // this name may also live outside the tree. A warning rather than a refusal: backup tools
+        // and deduplicating filesystems raise nlink on perfectly legitimate files.
         if (stats.nlink > 1) {
-            warn(`"${meta.folder}/SKILL.md" has ${stats.nlink} hard links; it may also be reachable outside the skills directory`)
+            warn(`"${label}" has ${stats.nlink} hard links; it may also be reachable outside the skills directory`)
         }
-
-        const raw = await handle.readFile('utf8')
-        const parsed = parseSkillFile(raw)
-        if (!parsed.ok) {
-            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" ${parsed.reason}.`)
-        }
-        return parsed.body
+        return await handle.readFile('utf8')
     } finally {
         await handle.close()
     }
+}
+
+/**
+ * Read one skill's post-frontmatter body, on demand. Re-reads and re-parses the file rather than
+ * consulting any cache, which is what makes a live edit to a skill visible on the next call.
+ */
+export const loadSkillBody = async (meta: SkillMeta): Promise<string> => {
+    const raw = await readGuardedFile(meta.absolutePath, `${meta.folder}/SKILL.md`)
+    const parsed = parseSkillFile(raw)
+    if (!parsed.ok) {
+        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" ${parsed.reason}.`)
+    }
+    return parsed.body
+}
+
+/**
+ * Read one of the companion files a skill cites, e.g. `security-checklist.md`.
+ *
+ * 11 of the 24 vendored skills tell the agent to consult one of these. Until this existed the agent
+ * was being instructed to open files it had no way to reach, so it either ignored the instruction or
+ * invented the contents.
+ *
+ * The filename pin does not become meaningless here, and that matters — it is the property that
+ * stops this subsystem being a model-steerable file reader. What is readable stays a CLOSED set
+ * fixed entirely by vendored text:
+ *
+ *   - `name` must appear in `meta.references`, which the parser derived from THIS skill's own body,
+ *     matching `[a-z0-9-]+\.md` so no separator or dot-segment can enter the set in the first place
+ *   - the file is resolved as a sibling `references/` directory of the skills root, then required to
+ *     still be inside it after resolution, so nothing survives that escaped the tree
+ *   - the same symlink, regular-file and size guards apply as for a skill body
+ *
+ * Nothing a model or a flow author says can widen that set. A skill can reach only the companions it
+ * actually cites.
+ */
+export const loadSkillReference = async (meta: SkillMeta, skillsDir: string, name: string): Promise<string> => {
+    const wanted = String(name || '')
+        .trim()
+        .toLowerCase()
+
+    if (!meta.references.includes(wanted)) {
+        const known = meta.references.length ? meta.references.join(', ') : 'none'
+        throw new Error(`Agent Skills: "${meta.folder}" does not reference "${wanted}". It cites: ${known}.`)
+    }
+
+    // skills-library/skills/<skill>/SKILL.md  ->  skills-library/references/<name>
+    const referencesDir = path.resolve(skillsDir, '..', 'references')
+    const absolutePath = path.resolve(referencesDir, wanted)
+
+    // Belt and braces. `wanted` cannot contain a separator by construction, so this cannot currently
+    // fire; it is what keeps that true if the parser's pattern is ever loosened.
+    if (absolutePath !== path.join(referencesDir, wanted)) {
+        throw new Error(`Agent Skills: reference "${wanted}" resolved outside the references directory and was not read.`)
+    }
+
+    return readGuardedFile(absolutePath, `references/${wanted}`)
 }

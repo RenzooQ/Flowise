@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { wrapSkillBody } from './envelope'
 import { capDescription, extractSection } from './parser'
-import { getSkillIndex, loadSkillBody } from './registry'
+import { getSkillIndex, loadSkillBody, loadSkillReference } from './registry'
 import { SkillMeta } from './types'
 
 /**
@@ -24,20 +24,43 @@ import { SkillMeta } from './types'
 /** Combined description budget above which the node suggests selecting a subset. */
 const DESCRIPTION_BUDGET_WARNING_CHARS = 20_000
 
-/** One skill, exposed as one callable tool. */
-class AgentSkillTool extends StructuredTool {
-    name: string
-    description: string
-
-    schema = z.object({
+/**
+ * The argument schema for one skill's tool.
+ *
+ * Built per skill rather than shared, because the `reference` description names that skill's own
+ * companion files. A model told exactly which values are legal picks one of them; a model told only
+ * that "a reference" exists guesses filenames that do not exist.
+ *
+ * Every property is `required`, which OpenAI strict mode demands, so both are always sent and an
+ * empty string is the "not asking for this" value.
+ */
+const buildSchema = (meta: SkillMeta) =>
+    z.object({
         section: z
             .string()
             .describe(
                 'Required. Pass an empty string "" to load the complete skill - that is the normal case. ' +
                     'Or pass a single heading, e.g. "Verification", to return only that section of the skill; ' +
                     'if that heading is absent the complete skill is returned instead.'
+            ),
+        reference: z
+            .string()
+            .describe(
+                meta.references.length
+                    ? 'Required. Pass an empty string "" for the skill itself - that is the normal case. ' +
+                          'This skill also cites companion documents; pass one of these exact names to load it ' +
+                          `instead of the skill body: ${meta.references.join(', ')}. Load the skill first, then a ` +
+                          'companion only if the skill tells you to consult it.'
+                    : 'Required. Always pass an empty string "" - this skill cites no companion documents.'
             )
     })
+
+/** One skill, exposed as one callable tool. */
+class AgentSkillTool extends StructuredTool {
+    name: string
+    description: string
+
+    schema: ReturnType<typeof buildSchema>
 
     private readonly meta: SkillMeta
     private readonly skillsDir: string
@@ -46,6 +69,7 @@ class AgentSkillTool extends StructuredTool {
         super()
         this.meta = meta
         this.skillsDir = skillsDir
+        this.schema = buildSchema(meta)
         this.name = meta.toolName
         // Verbatim frontmatter description. The "Use when ..." clause is the selection mechanism the
         // whole design rests on, so nothing is prepended, appended or rewritten. The "this is
@@ -54,7 +78,38 @@ class AgentSkillTool extends StructuredTool {
         this.description = capDescription(meta.description)
     }
 
-    async _call({ section }: z.infer<typeof this.schema>): Promise<string> {
+    /**
+     * Fill in any argument the model left out, then hand over to the normal validating path.
+     *
+     * Both properties are `required` in the schema because OpenAI strict mode demands that
+     * `required` list every property. Strict mode then guarantees they are sent — but nothing
+     * outside strict mode does, and `StructuredTool.call` validates before `_call` runs, so a single
+     * omitted key does not degrade one argument: it throws "Received tool input did not match
+     * expected schema" and takes down the whole agent run.
+     *
+     * That is not hypothetical. Adding `reference` broke the end-to-end run immediately, because the
+     * caller sent only `section`. The same exposure already existed for `section` alone; a second
+     * property simply doubled the chance of hitting it.
+     *
+     * Defaults are applied here rather than in the schema deliberately. Making the properties
+     * optional in Zod would drop them from `required` in the emitted JSON Schema, which is exactly
+     * what strict mode rejects. This keeps the schema strict for the model and forgiving at runtime.
+     */
+    async call(arg: any, configArg?: any, tags?: any): Promise<any> {
+        const withDefaults = arg && typeof arg === 'object' && !Array.isArray(arg) ? { section: '', reference: '', ...arg } : arg
+        return super.call(withDefaults, configArg, tags)
+    }
+
+    async _call({ section, reference }: z.infer<typeof this.schema>): Promise<string> {
+        // A companion document is a different file, so it short-circuits the body path entirely.
+        // Anything not in this skill's own cited set throws, and the message lists what IS available
+        // rather than only refusing — a model that guessed a filename can then pick a real one.
+        const wantedReference = (reference ?? '').trim()
+        if (wantedReference) {
+            const text = await loadSkillReference(this.meta, this.skillsDir, wantedReference)
+            return wrapSkillBody(this.meta.toolName, `references/${wantedReference.toLowerCase()}`, text)
+        }
+
         const body = await loadSkillBody(this.meta)
 
         // Blank means "the whole skill", which is the forced default: no heading is present in all

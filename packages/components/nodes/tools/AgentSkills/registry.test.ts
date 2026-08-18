@@ -481,6 +481,7 @@ describe('AgentSkills registry', () => {
                     title: '',
                     absolutePath: path.join(dir, 'linked', 'SKILL.md'),
                     sections: [],
+                    references: [],
                     sizeBytes: 10,
                     toolName: 'linked'
                 })
@@ -514,6 +515,7 @@ describe('AgentSkills registry', () => {
                     title: '',
                     absolutePath,
                     sections: [],
+                    references: [],
                     sizeBytes: 10,
                     toolName: 'pretend'
                 })
@@ -538,6 +540,7 @@ describe('AgentSkills registry', () => {
                     title: '',
                     absolutePath,
                     sections: [],
+                    references: [],
                     sizeBytes: 10,
                     toolName: 'gone'
                 })
@@ -551,6 +554,7 @@ describe('AgentSkills registry', () => {
                 title: '',
                 absolutePath,
                 sections: [],
+                references: [],
                 sizeBytes: 10,
                 toolName: 'gone'
             }).catch((e: Error) => {
@@ -570,6 +574,7 @@ describe('AgentSkills registry', () => {
                 title: '',
                 absolutePath: path.join(dir, 'stable', 'SKILL.md'),
                 sections: [],
+                references: [],
                 sizeBytes: 10,
                 toolName: 'stable'
             }

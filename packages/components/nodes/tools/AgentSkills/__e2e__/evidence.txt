@@ -2,8 +2,8 @@
 AGENT SKILLS — END-TO-END (real Flowise nodes, loaded from dist/)
 ==============================================================================
 dist nodes root : dist/nodes  (under packages/components)
-model endpoint  : http://127.0.0.1:8799/v1
-run at          : 2026-08-18T17:28:59.441Z
+model endpoint  : http://127.0.0.1:8802/v1
+run at          : 2026-08-18T18:46:19.692Z
 
 1. AgentSkills node — build the tool array from the BUILT tree
    label=Agent Skills  category=Tools  version=1  icon=agentskills.svg

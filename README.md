@@ -146,6 +146,25 @@ is the normal case and means "the whole skill". Pass a heading (for example `Ver
 just that section instead. If the heading is absent, the full body is returned — a miss is normal,
 not an error.
 
+### Companion reference documents
+
+11 of the 24 bundled skills tell the agent to consult a shared checklist — "see the quick-reference
+table in `../../references/security-checklist.md`", and similar. Seven such files exist, and the
+tool can return them.
+
+The tool's second argument, `reference`, takes one of those filenames; empty string (the normal
+case) means "the skill itself". **Each skill can only reach the companions its own text cites**,
+and each tool's schema lists exactly those names, so the model is told what is legal rather than
+left to guess. The other 13 skills advertise that they cite none.
+
+This deliberately does not turn the node into a general file reader. The readable set is a closed
+allowlist derived from vendored Markdown — not from the model, not from the flow author — and the
+names are matched against `[a-z0-9-]+\.md`, so no separator or dot-segment can enter it. Companions
+are served through exactly the same symlink, regular-file and size guards as a skill body, and
+inside the same untrusted-data envelope.
+
+### Section resolution
+
 Resolution tries, in order: exact `##` match, exact `###` match, then a normalised prefix match at
 each level, taking the first occurrence. That ordering is deliberate. In the bundled library
 `test-driven-development` has both `## When to Use` and `## When to Use Subagents for Testing`, so

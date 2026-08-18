@@ -21,6 +21,12 @@ export interface SkillMeta {
     absolutePath: string
     /** '##' heading texts in document order, with fenced code blocks stripped first. */
     sections: string[]
+    /**
+     * Basenames of the `../../references/*.md` companion files THIS skill links to, de-duplicated
+     * and sorted. Derived from the vendored body, never from user or model input, and it is what
+     * bounds `loadSkillReference`: a skill can only reach a companion it actually cites.
+     */
+    references: string[]
     /** Size of SKILL.md on disk, in bytes. */
     sizeBytes: number
 }
@@ -47,6 +53,8 @@ export interface ParsedSkillOk {
     title: string
     body: string
     sections: string[]
+    /** See `SkillMeta.references`. */
+    references: string[]
 }
 
 export interface ParsedSkillSkip {

@@ -57,6 +57,24 @@ export const extractTitle = (body: string): string => {
     return match ? match[1] : ''
 }
 
+/**
+ * Companion files this skill cites, as `../../references/<name>.md`.
+ *
+ * 11 of the 24 vendored skills tell the agent to consult one ("see the quick-reference table in
+ * ...", "use the matrix in ..."), naming 7 distinct files between them. Extracting that set is what
+ * lets the registry serve exactly those and nothing else.
+ *
+ * The character class is deliberately tight — `[a-z0-9-]` plus a `.md` suffix, so no dot, slash or
+ * backslash can be captured at all and nothing resembling a traversal can enter the set. The result
+ * is a closed allowlist derived from vendored text rather than from anything a model or a user
+ * says, which is what allows the registry to widen its filename pin without the pin ceasing to mean
+ * anything.
+ */
+const REFERENCE_LINK_RE = /\.\.\/\.\.\/references\/([a-z0-9-]+\.md)\b/gi
+
+export const extractReferences = (body: string): string[] =>
+    [...new Set([...body.matchAll(REFERENCE_LINK_RE)].map((match) => match[1].toLowerCase()))].sort()
+
 /** Lowercase, trim, collapse internal whitespace, drop one trailing colon. */
 const normaliseHeading = (heading: string): string => heading.trim().toLowerCase().replace(/\s+/g, ' ').replace(/:$/, '')
 
@@ -183,6 +201,7 @@ export const parseSkillFile = (raw: string): ParsedSkill => {
         description: description.trim(),
         title: extractTitle(body),
         body,
-        sections: extractSections(body)
+        sections: extractSections(body),
+        references: extractReferences(body)
     }
 }

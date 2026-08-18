@@ -341,7 +341,21 @@ describe('AgentSkills node', () => {
      * turns the test suite red at the moment it is introduced.
      */
     describe('ground rule 8: skills are never executed as code', () => {
-        const BANNED = /executeJavaScriptCode|eval\(|new Function|child_process|vm2|CustomTool\/core|OpenAPIToolkit\/core/
+        // Assembled from fragments deliberately. The same pattern is run as a plain shell grep over
+        // this directory in the T13 gate, and that gate expects ZERO matches - so spelling the
+        // tokens out here would make this test file the one thing that fails it. Split this way,
+        // no fragment matches the gate's pattern while the assembled regex is identical to it.
+        const BANNED = new RegExp(
+            [
+                'execute' + 'JavaScriptCode',
+                'eval' + '\\(',
+                'new ' + 'Function',
+                'child' + '_process',
+                'vm' + '2',
+                'CustomTool' + '/core',
+                'OpenAPIToolkit' + '/core'
+            ].join('|')
+        )
 
         it('contains none of the banned identifiers or import paths in any .ts in this directory', () => {
             const sources = fs.readdirSync(__dirname).filter((f) => f.endsWith('.ts'))
@@ -351,8 +365,6 @@ describe('AgentSkills node', () => {
             for (const file of sources) {
                 const contents = fs.readFileSync(path.join(__dirname, file), 'utf8')
                 contents.split('\n').forEach((line, i) => {
-                    // This test file necessarily contains the pattern itself, in the line above.
-                    if (file === path.basename(__filename) && line.includes('const BANNED')) return
                     if (BANNED.test(line)) offenders.push(`${file}:${i + 1}: ${line.trim()}`)
                 })
             }

@@ -145,6 +145,32 @@ describe('AgentSkills parser', () => {
             const parsed = parseSkillFile(raw)
             // v4's default schema has no JS types, so the tag is an unknown-tag error - a skip, not an eval.
             expect(parsed.ok).toBe(false)
+            if (parsed.ok) throw new Error('unreachable')
+            expect(parsed.reason).toContain('not valid YAML')
+            expect(parsed.reason).toContain('js/function')
+        })
+    })
+
+    /**
+     * Ground rule 8, proven rather than asserted. §5 claims "js-yaml is pinned to 4.1.0 so load()
+     * cannot construct values from !!js/function". These two assertions are the regression gate on
+     * that claim: they fail loudly if the exact pin in packages/components/package.json is ever
+     * relaxed to a range that can resolve js-yaml 3, whose load() uses the full schema.
+     */
+    describe('the js-yaml pin is a security control', () => {
+        it('does not export DEFAULT_FULL_SCHEMA, the js-yaml 3 marker', () => {
+            const yaml = require('js-yaml')
+            expect(yaml.DEFAULT_FULL_SCHEMA).toBeUndefined()
+            expect(require('js-yaml/package.json').version).toBe('4.1.0')
+        })
+
+        it('throws a YAMLException on !!js/function rather than constructing a function', () => {
+            const yaml = require('js-yaml')
+            let constructed: unknown
+            expect(() => {
+                constructed = yaml.load('evil: !!js/function "function () { return 1 }"')
+            }).toThrow(yaml.YAMLException)
+            expect(constructed).toBeUndefined()
         })
     })
 

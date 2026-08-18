@@ -60,8 +60,12 @@ observer.
 **NOT proven:** that a production LLM _elects_ to call a skill unprompted. Selection in the stub is
 deterministic lexical overlap, not model judgement. Case 1 makes this visible rather than hiding it:
 for a _"write a formal specification"_ prompt the stub chose `code-review-and-quality` with a score
-of 2, tied with three other skills. **A real tool-calling model is still required to demonstrate
-skill _selection quality_.** The mechanism is proven; the judgement is not.
+of 2, tied with three other skills. The mechanism is proven here; the judgement is not.
+
+**That gap is now closed separately.** See [SKILL-SELECTION-EVAL.md](./SKILL-SELECTION-EVAL.md): the
+24 shipped descriptions were blind-tested by real LLM selectors against 117 labelled prompts from
+upstream own eval fixtures, scoring **95.7% top-1 and 100% top-2**, with all 78 positive prompts
+routed correctly on first choice. This document covers the plumbing; that one covers the judgement.
 
 ---
 

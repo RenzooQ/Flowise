@@ -143,6 +143,31 @@ find packages/components/skills-library -name '*.sh' -o -name '*.js' -o -name '*
 git diff --stat -- packages/components/skills-library        -> empty (vendored content unmutated)
 ```
 
+## Verified from a pristine clone
+
+Everything above was measured in a working tree that had been built up incrementally, which cannot
+prove another person could use this branch. So the whole CI sequence was repeated against a fresh
+`git clone` of `feat/agent-skills` — a tree nothing in this project had ever touched:
+
+```
+git clone --branch feat/agent-skills --depth 1     fresh tree
+pnpm install --frozen-lockfile      exit 0         3m56s
+pnpm lint                           exit 0         7 problems (0 errors, 7 warnings)
+pnpm build                          exit 0         6/6 turbo tasks
+
+node, loaded from that clone dist/:
+  tools exposed        24
+  icon in dist         yes
+  enveloped            true
+  body byte-identical  true  (15,970 chars vs the vendored SKILL.md)
+  loadMethods options  24
+```
+
+`--frozen-lockfile` is the meaningful one: it is what CI runs, and it fails outright if
+`pnpm-lock.yaml` and the `package.json` files disagree. Passing it on a clean tree is the proof
+that the hand-written three-line importer entry added for the `js-yaml` pin is genuinely correct,
+rather than merely working in a tree that already had the package installed.
+
 ## Reproducing
 
 ```bash

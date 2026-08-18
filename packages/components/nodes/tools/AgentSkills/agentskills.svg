@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+    <!-- Original artwork. Explicit fills and strokes, never currentColor: the icon is served
+         into an <img src> by GET /api/v1/node-icon/agentSkills, where currentColor renders black. -->
+
+    <!-- Skill sheet -->
+    <rect x="3" y="2.5" width="14" height="19" rx="2.5" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.6" />
+
+    <!-- Instruction lines -->
+    <line x1="6.25" y1="7" x2="13.75" y2="7" stroke="#4F46E5" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="6.25" y1="10.5" x2="13.75" y2="10.5" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="6.25" y1="14" x2="11" y2="14" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="6.25" y1="17.5" x2="9.5" y2="17.5" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round" />
+
+    <!-- Activation spark: the skill is invoked, not merely stored -->
+    <path
+        d="M17.5 9.5 L18.85 12.65 L22 14 L18.85 15.35 L17.5 18.5 L16.15 15.35 L13 14 L16.15 12.65 Z"
+        fill="#F59E0B"
+        stroke="#B45309"
+        stroke-width="0.9"
+        stroke-linejoin="round"
+    />
+</svg>

@@ -127,6 +127,25 @@ each level, taking the first occurrence. That ordering is deliberate. In the bun
 exact must beat prefix; `idea-refine` puts `### Process` at H3; and `security-and-hardening` writes
 `## Process: Threat Model First`, which only a prefix match will find.
 
+### Known routing gaps
+
+The bundled descriptions were measured against 117 labelled prompts from the upstream project’s own
+eval fixtures: **95.7% routed to the right skill on first choice, 100% within the top two**. Full
+method and numbers in [`docs/SKILL-SELECTION-EVAL.md`](docs/SKILL-SELECTION-EVAL.md).
+
+Three phrasings are known **not** to route well, because no bundled description claims them:
+
+| If you ask about…                          | What happens                         | Why                                                                                        |
+| ------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| an existing CI pipeline that just went red | picks `debugging-and-error-recovery` | `ci-cd-and-automation` describes _authoring_ pipelines and never mentions diagnosis        |
+| running an existing test suite             | picks nothing                        | `test-driven-development` is about _writing_ tests                                         |
+| deploying to **staging**                   | picks nothing                        | no description names a non-production environment; `shipping-and-launch` says "production" |
+
+These are gaps in the upstream skill files, not in this node, and they are deliberately not patched
+here — the files are vendored byte-for-byte and editing them would break the fidelity guarantee in
+[`NOTICE`](NOTICE). Name the skill explicitly in your prompt to route past them, or supply your own
+skills directory with wording that covers your cases.
+
 ### ⚠️ Trust boundary — read this
 
 **Skill text becomes instructions to an agent that holds real, side-effecting tools. Whoever can

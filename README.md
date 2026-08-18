@@ -128,15 +128,15 @@ Rules the parser enforces:
 
 -   `name` and `description` must both be non-empty strings. Anything else is skipped with a warning
     rather than crashing the node.
+-   Keep `description` **within 1024 characters**. Beyond that it is truncated at a word boundary,
+    which quietly costs you the end of the "Use when …" clause the model routes on.
 -   The file must be named exactly `SKILL.md`, exactly one directory below the skills root. Nothing
     else is ever opened.
 -   Section headings are optional. There is no required structure — the whole body after the
     frontmatter is what the tool returns by default.
 
-Point **Skills Directory** at the parent directory, then hit refresh on the **Skills** input.
-
-Tool names are derived from `name`, lowercased and reduced to `[a-z0-9_-]`, capped at 64 characters,
-and de-duplicated with `_2`, `_3` suffixes on collision.
+Point **Skills Directory** at the parent directory, then hit refresh on the **Skills** input — noting
+the 60-second window described above if you are adding a folder to a directory already in use.
 
 ### Loading part of a skill
 

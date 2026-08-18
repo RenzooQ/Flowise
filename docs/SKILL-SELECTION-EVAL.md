@@ -54,6 +54,23 @@ Three things worth drawing out:
 The 39 negative-owner prompts are the hard set by construction — upstream wrote them to _look_ like
 they belong to another skill. 87% first-choice on adversarial cases is a good number.
 
+## Validity check: is this just name matching?
+
+A fair objection to the headline number: many fixture prompts contain words from the target skill's
+own _name_, so a selector could score well by string overlap rather than by understanding the
+description. Splitting the 117 prompts on whether any distinctive word of the expected skill's name
+appears in the prompt text:
+
+```
+name-echo present    n= 43    top1  97.7%    top2 100.0%
+NO name echo         n= 74    top1  94.6%    top2 100.0%
+```
+
+**The majority of the set (74 of 117) contains no name echo at all, and still scores 94.6% top-1.**
+Those prompts are decided by the description text alone, so the result is not an artifact of name
+matching. All four misses in that group are negative-owner (adversarial) cases at medium or low
+confidence — three are the ci-cd/debugging collision, one is the staging gap.
+
 ## The five misses
 
 | Prompt                                        | Expected                  | Chosen                         |

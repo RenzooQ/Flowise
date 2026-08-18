@@ -329,18 +329,70 @@ export const loadSkillBody = async (meta: SkillMeta): Promise<string> => {
     // The index-time size and symlink guards are re-applied here, not trusted from the index. The
     // index is cached for SKILL_INDEX_TTL_MS, so a file can be grown or replaced with a symlink in
     // between; without this the stated 1 MB bound is simply untrue at the moment the body is served.
-    const stats = await fs.promises.lstat(meta.absolutePath)
-    if (stats.isSymbolicLink()) {
+    //
+    // Checked and read through ONE file handle rather than by path. The previous form did lstat(path)
+    // then readFile(path) — two independent resolutions of the same name, with a window between them,
+    // and readFile follows symlinks even though lstat had just refused one. Anything able to write
+    // into the skills directory could swap the entry in that window and be served a file the guards
+    // had already approved under a different identity. Opening once and using fstat on the descriptor
+    // removes the second resolution: the bytes read are provably the bytes that were checked.
+    //
+    // The symlink refusal has to happen on the PATH, before the open. Once a descriptor exists it
+    // refers to the target, so fstat reports a perfectly ordinary regular file and isSymbolicLink()
+    // is false — checking only the handle would silently stop refusing symlinks altogether.
+    //
+    // O_NOFOLLOW folds that refusal into the open itself, atomically. It does not exist on Windows
+    // (fs.constants.O_NOFOLLOW is undefined there, verified on this host), so on Windows the lstat
+    // below is what carries the guarantee, with the same small window the previous implementation
+    // had. Everything after the open — size and content — is read through the descriptor, so the
+    // bytes served are provably the bytes that were measured.
+    const lstats = await fs.promises.lstat(meta.absolutePath).catch((error: NodeJS.ErrnoException) => {
+        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" could not be read (${error?.code || 'read error'}).`)
+    })
+    if (lstats.isSymbolicLink()) {
         throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is a symbolic link and was not read.`)
     }
-    if (stats.size > MAX_SKILL_FILE_BYTES) {
-        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is ${stats.size} bytes, above the ${MAX_SKILL_FILE_BYTES}-byte limit.`)
+
+    const noFollow = typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0
+    let handle: fs.promises.FileHandle
+    try {
+        handle = await fs.promises.open(meta.absolutePath, fs.constants.O_RDONLY | noFollow)
+    } catch (error) {
+        const code = (error as NodeJS.ErrnoException)?.code
+        // ELOOP is what O_NOFOLLOW raises when the name became a symlink after the lstat above.
+        if (code === 'ELOOP') {
+            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is a symbolic link and was not read.`)
+        }
+        // ENOENT here means the file vanished between indexing and this call, which is ordinary
+        // rather than exceptional. Name the skill, and do not leak the absolute server path.
+        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" could not be opened (${code || 'read error'}).`)
     }
 
-    const raw = await fs.promises.readFile(meta.absolutePath, 'utf8')
-    const parsed = parseSkillFile(raw)
-    if (!parsed.ok) {
-        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" ${parsed.reason}.`)
+    try {
+        const stats = await handle.stat()
+        if (!stats.isFile()) {
+            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is not a regular file and was not read.`)
+        }
+        if (stats.size > MAX_SKILL_FILE_BYTES) {
+            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is ${stats.size} bytes, above the ${MAX_SKILL_FILE_BYTES}-byte limit.`)
+        }
+        // A hard link passes every check above deterministically — it IS a regular file, with no
+        // symlink to detect and no race to win — so link count is the only signal that this name
+        // may also live outside the skills directory. It is a warning rather than a refusal: a
+        // backup tool or a deduplicating filesystem can raise nlink on a perfectly legitimate file,
+        // and the parser already requires skill-shaped frontmatter, which is what actually stops an
+        // arbitrary file being served here.
+        if (stats.nlink > 1) {
+            warn(`"${meta.folder}/SKILL.md" has ${stats.nlink} hard links; it may also be reachable outside the skills directory`)
+        }
+
+        const raw = await handle.readFile('utf8')
+        const parsed = parseSkillFile(raw)
+        if (!parsed.ok) {
+            throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" ${parsed.reason}.`)
+        }
+        return parsed.body
+    } finally {
+        await handle.close()
     }
-    return parsed.body
 }

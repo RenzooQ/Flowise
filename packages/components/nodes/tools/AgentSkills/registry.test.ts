@@ -446,6 +446,138 @@ describe('AgentSkills registry', () => {
         })
     })
 
+    describe('loadSkillBody reads through one descriptor', () => {
+        // Windows refuses symlink creation without elevation or developer mode (measured: EPERM on
+        // this host), so these skip rather than fail there. They are the assertions that matter on
+        // Linux CI, which is where the product actually runs.
+        const canSymlink = (() => {
+            try {
+                const probe = makeTempDir()
+                fs.writeFileSync(path.join(probe, 'target'), 'x')
+                fs.symlinkSync(path.join(probe, 'target'), path.join(probe, 'link'))
+                return true
+            } catch {
+                return false
+            }
+        })()
+
+        const symlinkIt = canSymlink ? it : it.skip
+
+        symlinkIt('refuses a SKILL.md that is a symbolic link, even to a valid skill', async () => {
+            // The refusal must be on the PATH: once a descriptor is open it refers to the target, so
+            // fstat reports an ordinary regular file. Checking only the handle would silently stop
+            // refusing symlinks — this is that regression's test.
+            const dir = makeTempDir()
+            const real = makeTempDir()
+            fs.writeFileSync(path.join(real, 'elsewhere.md'), validSkill('elsewhere'))
+            fs.mkdirSync(path.join(dir, 'linked'))
+            fs.symlinkSync(path.join(real, 'elsewhere.md'), path.join(dir, 'linked', 'SKILL.md'))
+
+            await expect(
+                loadSkillBody({
+                    folder: 'linked',
+                    name: 'linked',
+                    description: 'd',
+                    title: '',
+                    absolutePath: path.join(dir, 'linked', 'SKILL.md'),
+                    sections: [],
+                    sizeBytes: 10,
+                    toolName: 'linked'
+                })
+            ).rejects.toThrow(/symbolic link/)
+        })
+
+        it('refuses a symlink on every platform, including where one cannot be created', async () => {
+            // The real-symlink test above skips on Windows, and a skipped test guarantees nothing on
+            // the host you are actually developing on. This drives the same branch by making lstat
+            // report a link, so the guard is verified everywhere the suite runs.
+            const dir = makeTempDir()
+            writeSkill(dir, 'pretend', validSkill('pretend'))
+            const absolutePath = path.join(dir, 'pretend', 'SKILL.md')
+
+            const realLstat = fs.promises.lstat
+            const lstatSpy = jest.spyOn(fs.promises, 'lstat').mockImplementation(async (target) => {
+                const stats = await realLstat(target as string)
+                if (String(target) === absolutePath) {
+                    // Same stats object, one answer changed: this is the only lie in the test.
+                    Object.defineProperty(stats, 'isSymbolicLink', { value: () => true })
+                }
+                return stats
+            })
+            const openSpy = jest.spyOn(fs.promises, 'open')
+
+            await expect(
+                loadSkillBody({
+                    folder: 'pretend',
+                    name: 'pretend',
+                    description: 'd',
+                    title: '',
+                    absolutePath,
+                    sections: [],
+                    sizeBytes: 10,
+                    toolName: 'pretend'
+                })
+            ).rejects.toThrow(/symbolic link/)
+
+            // The refusal must happen BEFORE the file is opened; otherwise the descriptor already
+            // refers to the target and fstat can no longer tell.
+            expect(openSpy).not.toHaveBeenCalled()
+
+            lstatSpy.mockRestore()
+            openSpy.mockRestore()
+        })
+
+        it('reports a vanished file by skill name, without leaking the server path', async () => {
+            const dir = makeTempDir()
+            const absolutePath = path.join(dir, 'gone', 'SKILL.md')
+            await expect(
+                loadSkillBody({
+                    folder: 'gone',
+                    name: 'gone',
+                    description: 'd',
+                    title: '',
+                    absolutePath,
+                    sections: [],
+                    sizeBytes: 10,
+                    toolName: 'gone'
+                })
+            ).rejects.toThrow(/"gone\/SKILL\.md" could not be read/)
+
+            // The message reaches a chat end user, so it must not carry the absolute server path.
+            await loadSkillBody({
+                folder: 'gone',
+                name: 'gone',
+                description: 'd',
+                title: '',
+                absolutePath,
+                sections: [],
+                sizeBytes: 10,
+                toolName: 'gone'
+            }).catch((e: Error) => {
+                expect(e.message).not.toContain(dir)
+            })
+        })
+
+        it('serves the body it measured when the file is replaced mid-call', async () => {
+            // The point of reading through the descriptor: content cannot be swapped between the
+            // size check and the read.
+            const dir = makeTempDir()
+            writeSkill(dir, 'stable', validSkill('stable'))
+            const meta = {
+                folder: 'stable',
+                name: 'stable',
+                description: 'd',
+                title: '',
+                absolutePath: path.join(dir, 'stable', 'SKILL.md'),
+                sections: [],
+                sizeBytes: 10,
+                toolName: 'stable'
+            }
+            const body = await loadSkillBody(meta)
+            expect(body).toContain('Body of stable.')
+        })
+    })
+
     describe('built-tree resolution (the candidate no test used to reach)', () => {
         // Under jest __dirname is the source layout, so the first candidate always hits and the
         // built-tree entry is never evaluated. Deleting it would leave every test green and every

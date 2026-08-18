@@ -1,8 +1,15 @@
 name: Node CI
 on:
+    # Upstream ran this only on pushes to main, plus pull requests. On a fork that combination means
+    # a feature branch gets no CI at all until a PR exists — which is how the Agent Skills work
+    # reached this fork's main with zero checks ever having run on it. `feat/**` and `fix/**` are
+    # added so a branch is tested when it is pushed, rather than only when someone remembers to open
+    # a pull request.
     push:
         branches:
             - main
+            - 'feat/**'
+            - 'fix/**'
     pull_request:
         branches:
             - '*'

@@ -31,7 +31,13 @@ const escapeAttribute = (value: string): string =>
  * can see that the body tried to forge a marker.
  */
 export const escapeSkillBody = (body: string): string =>
-    body.replace(/-{3} END SKILL TEXT -{3}/g, '--- END SKILL TEXT (escaped) ---').replace(/<\/agent-skill>/gi, '&lt;/agent-skill&gt;')
+    body
+        // Deliberately loose. Exact-literal matching let near-misses through that a model still
+        // reads as the terminator - "---END SKILL TEXT---" with no spaces, lower case, or
+        // "</agent-skill >" with interior whitespace - while this function reported success.
+        // Match what a reader would treat as a close, not what a strict parser would.
+        .replace(/-{3,}\s*END\s+SKILL\s+TEXT\s*-{3,}/gi, '--- END SKILL TEXT (escaped) ---')
+        .replace(/<\s*\/\s*agent-skill\s*>/gi, '&lt;/agent-skill&gt;')
 
 /**
  * Build the payload a skill tool returns.

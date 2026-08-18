@@ -377,4 +377,30 @@ describe('AgentSkills registry', () => {
             expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[AgentSkills] .*broken/))
         })
     })
+
+    describe('index cache is bounded (code review finding 4)', () => {
+        // The key is a caller-supplied path reaching here from the Skills Directory input via
+        // POST /api/v1/node-load-method, and the TTL rebuilds entries but never removes them, so
+        // an unbounded map would grow one entry per distinct path named, for the process lifetime.
+        it('evicts the oldest entries beyond MAX_CACHED_INDEXES', async () => {
+            clearSkillIndexCache()
+            const dirs: string[] = []
+            for (let n = 0; n < 20; n++) {
+                const d = makeTempDir()
+                writeSkill(d, 'alpha', validSkill('alpha'))
+                dirs.push(d)
+                await getSkillIndex(d)
+            }
+            // The first directories indexed must no longer be cached; the most recent must be.
+            const readsFor = async (dir: string): Promise<number> => {
+                const spy = jest.spyOn(fs.promises, 'readdir')
+                await getSkillIndex(dir)
+                const n = spy.mock.calls.length
+                spy.mockRestore()
+                return n
+            }
+            expect(await readsFor(dirs[19])).toBe(0)
+            expect(await readsFor(dirs[0])).toBeGreaterThan(0)
+        })
+    })
 })

@@ -377,4 +377,36 @@ describe('AgentSkills node', () => {
             expect(source).not.toMatch(/from '\.\.\/[A-Za-z]+\/core'/)
         })
     })
+
+    describe('code review follow-ups', () => {
+        it('does not describe `section` as optional, because the schema requires it', async () => {
+            // The description used to say "Optional heading..." and "Pass an empty string" while the
+            // schema made the property REQUIRED for OpenAI strict mode. A model that believed the
+            // description and omitted the key got ToolInputParsingException instead of the skill.
+            const tools = await node.init(createNodeData('cr1', {}), '')
+            const described = tools[0].schema.shape.section.description as string
+            expect(described).not.toMatch(/optional/i)
+            expect(described).toMatch(/required/i)
+            expect(described).toMatch(/empty string/i)
+        })
+
+        it('still rejects an omitted section, so the description must keep telling the truth', async () => {
+            const tools = await node.init(createNodeData('cr2', {}), '')
+            await expect(tools[0].invoke({})).rejects.toThrow()
+            await expect(tools[0].invoke({ section: '' })).resolves.toContain('BEGIN SKILL TEXT')
+        })
+
+        it('de-duplicates a repeated folder in selectedSkills', async () => {
+            // The multi-select UI cannot produce repeats, but an imported flow JSON, a marketplace
+            // template or an API-created chatflow can. Two tools sharing a name is not cosmetic:
+            // OpenAI and Anthropic both reject the request, failing every run of the whole agent.
+            const tools = await node.init(
+                createNodeData('cr3', { skillSelection: 'selected', selectedSkills: '["idea-refine","idea-refine","interview-me"]' }),
+                ''
+            )
+            const names = tools.map((tool: any) => tool.name)
+            expect(names).toEqual(['idea-refine', 'interview-me'])
+            expect(new Set(names).size).toBe(names.length)
+        })
+    })
 })

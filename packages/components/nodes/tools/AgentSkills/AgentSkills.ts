@@ -33,9 +33,9 @@ class AgentSkillTool extends StructuredTool {
         section: z
             .string()
             .describe(
-                'Optional heading to return instead of the whole skill, e.g. "Verification". ' +
-                    'Falls back to the complete skill if the heading is absent. ' +
-                    'Pass an empty string to load the complete skill (recommended).'
+                'Required. Pass an empty string "" to load the complete skill - that is the normal case. ' +
+                    'Or pass a single heading, e.g. "Verification", to return only that section of the skill; ' +
+                    'if that heading is absent the complete skill is returned instead.'
             )
     })
 
@@ -59,6 +59,11 @@ class AgentSkillTool extends StructuredTool {
 
         // Blank means "the whole skill", which is the forced default: no heading is present in all
         // 24 vendored files and `## Process` is exactly 1 of 24 as an exact H2.
+        //
+        // `section` is a REQUIRED property (see the schema above), so StructuredTool.call rejects a
+        // missing key before this runs and `?? ''` cannot fire today. It is kept deliberately: the
+        // property is required only to satisfy OpenAI strict mode, which demands that `required`
+        // list every property, and a future relaxation of that would make undefined reachable again.
         const wanted = (section ?? '').trim()
         const payload = wanted ? extractSection(body, wanted) : body
 
@@ -187,7 +192,14 @@ class AgentSkills_Tools implements INode {
 
             const byFolder = new Map(index.skills.map((skill) => [skill.folder, skill]))
             chosen = []
+            // De-duplicate: the multi-select UI cannot produce repeats, but an imported flow JSON, a
+            // marketplace template or an API-created chatflow can. Two tools with one name is not a
+            // cosmetic problem - OpenAI and Anthropic both reject the request outright, so a single
+            // duplicated entry would fail every run of the whole agent, not just one call.
+            const seenFolders = new Set<string>()
             for (const folder of selected) {
+                if (seenFolders.has(folder)) continue
+                seenFolders.add(folder)
                 const skill = byFolder.get(folder)
                 if (!skill) {
                     // The user may have edited the skills directory since selecting. Warn and skip.

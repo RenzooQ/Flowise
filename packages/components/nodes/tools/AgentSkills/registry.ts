@@ -39,7 +39,23 @@ export const MAX_SKILL_FILE_BYTES = 1024 * 1024
 /** Tool names are capped at this length before de-duplication suffixes are applied. */
 const MAX_TOOL_NAME_CHARS = 64
 
+/**
+ * Most entries this map will ever hold: the bundled library plus a handful of override directories.
+ * The key is a caller-supplied path (the Skills Directory input reaches here via
+ * POST /api/v1/node-load-method), and the TTL only forces a REBUILD of an entry, never a removal, so
+ * without a bound any flow editor could grow this map one entry per distinct path they name and it
+ * would retain up to MAX_SKILL_DIR_ENTRIES SkillMeta objects each for the lifetime of the process.
+ */
+const MAX_CACHED_INDEXES = 16
+
 const indexCache = new Map<string, SkillIndex>()
+
+/** Evict the least recently loaded entries until the cache is within MAX_CACHED_INDEXES. */
+const evictOldestIndexes = (): void => {
+    if (indexCache.size <= MAX_CACHED_INDEXES) return
+    const byAge = [...indexCache.entries()].sort((a, b) => a[1].loadedAt - b[1].loadedAt)
+    for (const [key] of byAge.slice(0, indexCache.size - MAX_CACHED_INDEXES)) indexCache.delete(key)
+}
 
 const warn = (message: string): void => console.warn(`[AgentSkills] ${message}`)
 
@@ -259,6 +275,7 @@ export const getSkillIndex = async (override?: string): Promise<SkillIndex> => {
     const index = await buildSkillIndex(skillsDir)
     for (const message of index.warnings) warn(message)
     indexCache.set(skillsDir, index)
+    evictOldestIndexes()
     return index
 }
 

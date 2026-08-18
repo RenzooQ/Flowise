@@ -124,6 +124,20 @@ describe('AgentSkills registry', () => {
             fs.writeFileSync(meta.absolutePath, validSkill('alpha').replace('Body of alpha', 'Edited body'), 'utf8')
             expect(await loadSkillBody(meta)).toContain('Edited body')
         })
+
+        it('re-applies the size guard at read time, so a file grown after indexing is refused', async () => {
+            // The index is cached for SKILL_INDEX_TTL_MS, so a file can grow between being indexed
+            // and having its body served. Checking only at index time makes the stated 1 MB bound
+            // untrue at the moment that matters. Measured before the fix: a 3 MB body was served.
+            const dir = makeTempDir()
+            writeSkill(dir, 'grow', validSkill('grow'))
+            const index = await buildSkillIndex(dir)
+            const meta = index.skills[0]
+            expect(await loadSkillBody(meta)).toContain('Body of grow')
+
+            fs.writeFileSync(meta.absolutePath, `---\nname: grow\ndescription: d\n---\n\n${'X'.repeat(2 * 1024 * 1024)}\n`, 'utf8')
+            await expect(loadSkillBody(meta)).rejects.toThrow(/above the .* limit/)
+        })
     })
 
     describe('__dirname probe', () => {
@@ -138,10 +152,13 @@ describe('AgentSkills registry', () => {
             expect(await resolveSkillsDir(dir)).toBe(path.resolve(dir))
         })
 
-        it('falls back to the bundled library and warns when the override is not a directory', async () => {
+        it('does NOT fall back to the bundled library when a given override is unresolvable', async () => {
+            // Falling back would silently swap a DIFFERENT instruction set into an agent whose author
+            // asked for their own, with only a server-log warning the flow author never sees.
+            // Resolving to '' is what makes init() throw with the bad path in the message.
             const missing = path.join(os.tmpdir(), 'agentskills-does-not-exist-x9')
-            expect(await resolveSkillsDir(missing)).toBe(path.resolve(VENDORED_DIR))
-            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[AgentSkills]'))
+            expect(await resolveSkillsDir(missing)).toBe('')
+            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('is not a readable directory'))
         })
 
         it('ignores an empty or whitespace-only override without warning', async () => {
@@ -165,6 +182,26 @@ describe('AgentSkills registry', () => {
             expect(index.warnings).toHaveLength(2)
             expect(index.warnings.join('\n')).toContain('broken')
             expect(index.warnings.join('\n')).toContain('empty-dir')
+        })
+
+        it('refuses a symlinked SKILL.md, the way it already refuses a symlinked directory', async () => {
+            // stat() follows symlinks; lstat() does not. Without lstat, <skill>/SKILL.md could point
+            // at any file on disk and its contents would be handed to the model. Skipped where the
+            // OS refuses symlink creation (Windows without developer mode) rather than failing.
+            const dir = makeTempDir()
+            writeSkill(dir, 'normal', validSkill('normal'))
+            const target = path.join(dir, 'elsewhere.md')
+            fs.writeFileSync(target, validSkill('elsewhere'), 'utf8')
+            fs.mkdirSync(path.join(dir, 'sneaky'))
+            try {
+                fs.symlinkSync(target, path.join(dir, 'sneaky', 'SKILL.md'), 'file')
+            } catch {
+                return // no symlink privilege on this host
+            }
+
+            const index = await buildSkillIndex(dir)
+            expect(index.skills.map((s) => s.folder)).toEqual(['normal'])
+            expect(index.warnings.join('\n')).toContain('symbolic link')
         })
 
         it('returns an empty index and a warning for a non-existent directory, without throwing', async () => {

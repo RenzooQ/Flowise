@@ -17,6 +17,11 @@ import { SkillIndex, SkillMeta } from './types'
  *
  * The filename pin is the load-bearing one: it is what stops this from becoming a
  * model-steerable file reader over a directory the flow author can repoint.
+ *
+ * One cross-platform caveat worth knowing rather than discovering: the pin is resolved by the
+ * filesystem, so it is case-SENSITIVE on Linux and case-INSENSITIVE on Windows and macOS. A
+ * directory containing `skill.md` indexes on Windows and does not on Linux. Only ever one filename
+ * is opened either way, so the bound holds; do not assume exact-case behaviour is portable.
  */
 
 /** Directory name of the vendored library, relative to the components package root. */
@@ -57,13 +62,20 @@ const isDirectory = async (candidate: string): Promise<boolean> => {
  * one depth - the same shape as `src/modelLoader.ts:12-20` and `src/utils.ts:223-227`, which
  * probes 1 through 5.
  *
+ * An override that is given but does not resolve returns '' rather than falling back to the bundled
+ * library. Falling back would silently swap a DIFFERENT set of instructions into an agent whose
+ * author asked for their own - the warning only reaches the server log, which a flow author never
+ * sees. Returning '' makes `init()` throw with the bad path in the message, which is the visible
+ * failure the design asks for. The bundled library is the default only when no override was given.
+ *
  * Returns '' when nothing resolves. Callers decide what that means; this never throws.
  */
 export const resolveSkillsDir = async (override?: string): Promise<string> => {
     const trimmed = (override ?? '').trim()
     if (trimmed) {
         if (await isDirectory(trimmed)) return path.resolve(trimmed)
-        warn(`skills directory override "${trimmed}" is not a readable directory; falling back to the bundled skills`)
+        warn(`skills directory override "${trimmed}" is not a readable directory`)
+        return ''
     }
 
     const candidates = [
@@ -113,12 +125,19 @@ const indexOneSkill = async (skillsDir: string, folder: string, warnings: string
 
     let stats: fs.Stats
     try {
-        stats = await fs.promises.stat(absolutePath)
+        // lstat, not stat: stat FOLLOWS symlinks, so a symlinked SKILL.md pointing anywhere on disk
+        // would be read and its contents handed to the model. Directory entries are already refused
+        // when they are links (below); refusing the file too keeps that guarantee consistent.
+        stats = await fs.promises.lstat(absolutePath)
     } catch {
         warnings.push(`"${folder}" has no SKILL.md; skipped`)
         return null
     }
 
+    if (stats.isSymbolicLink()) {
+        warnings.push(`"${folder}/SKILL.md" is a symbolic link; skipped`)
+        return null
+    }
     if (!stats.isFile()) {
         warnings.push(`"${folder}/SKILL.md" is not a regular file; skipped`)
         return null
@@ -253,6 +272,17 @@ export const clearSkillIndexCache = (): void => {
  * consulting any cache, which is what makes a live edit to a skill visible on the next call.
  */
 export const loadSkillBody = async (meta: SkillMeta): Promise<string> => {
+    // The index-time size and symlink guards are re-applied here, not trusted from the index. The
+    // index is cached for SKILL_INDEX_TTL_MS, so a file can be grown or replaced with a symlink in
+    // between; without this the stated 1 MB bound is simply untrue at the moment the body is served.
+    const stats = await fs.promises.lstat(meta.absolutePath)
+    if (stats.isSymbolicLink()) {
+        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is a symbolic link and was not read.`)
+    }
+    if (stats.size > MAX_SKILL_FILE_BYTES) {
+        throw new Error(`Agent Skills: "${meta.folder}/SKILL.md" is ${stats.size} bytes, above the ${MAX_SKILL_FILE_BYTES}-byte limit.`)
+    }
+
     const raw = await fs.promises.readFile(meta.absolutePath, 'utf8')
     const parsed = parseSkillFile(raw)
     if (!parsed.ok) {

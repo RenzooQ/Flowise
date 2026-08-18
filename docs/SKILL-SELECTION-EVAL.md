@@ -121,7 +121,8 @@ All three failure modes are **gaps in the upstream descriptions**, not defects i
 -   **Nobody owns running an existing suite.** `test-driven-development` is entirely about _writing_
     tests.
 -   **No description in the pack names a non-production environment** — staging, preview, canary.
-    `shipping-and-launch` says "production" three times.
+    `shipping-and-launch` says "production" twice ("Prepares production launches. Use when preparing
+    to deploy to production."), and nothing anywhere names another environment.
 
 Other coverage gaps the analysis surfaced: the tokens _memory leak_, _feature flag_, and _PRD_ appear
 in zero descriptions, and `documentation-and-adrs` covers creating docs but never updating them.
@@ -165,5 +166,41 @@ Two clean paths instead:
 
 ## Reproducing
 
-The answer key is held separately from the prompt file so the run can be repeated blind. Scoring is
-plain arithmetic over the two files; no model is involved in grading.
+Be clear about which half of this is replayable, because the two are not the same.
+
+**The inputs are fully reproducible.** Both the labelled prompts and the tool descriptions can be
+rebuilt from source with a committed script:
+
+```bash
+git clone https://github.com/addyosmani/agent-skills
+git -C agent-skills checkout df1edb2e05487d0aa6d93c747141e0aed1187f25   # the SHA in VENDOR.md
+
+pnpm --filter flowise-components build
+cd packages/components/nodes/tools/AgentSkills/__e2e__
+node build-selection-dataset.js --skills-repo ../../../../../../agent-skills
+```
+
+It extracts the labelled prompts from upstream's `evals/cases/*.json` and reads the 24
+`{name, description}` pairs out of the **built** node by calling `init()` — not transcribed by hand,
+which matters when the descriptions are the entire selection surface. It then checks its own output
+against the totals published above and exits non-zero on any drift. Verified to reproduce them
+exactly:
+
+```
+skills            : 24
+labelled prompts  : 117  (78 positive, 39 negative-owner)
+description chars : 6505
+dangling labels   : 0
+Counts match the published evaluation.
+```
+
+**The scoring run is not replayable, and no wording here should suggest otherwise.** It used ten
+independent LLM selectors, which are not deterministic; re-running would produce a similar number,
+not the same one. The answer key was held separately from the prompt file so the selectors ran
+blind, and grading itself is plain arithmetic with no model involved — but the measurement is a
+point-in-time result, not a regression test. Treat 95.7% as a measured observation about these
+descriptions, reproducible in method rather than in digits.
+
+What a reader can independently verify today: the dataset (above), the byte-fidelity of every
+description (`vendored-library.test.ts`), and the mechanism end to end
+([`E2E-EVIDENCE.md`](E2E-EVIDENCE.md)).

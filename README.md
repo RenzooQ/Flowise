@@ -48,10 +48,20 @@ the fork, vendored at `packages/components/skills-library/`.
 
 ### How it works
 
-Each selected skill becomes **one tool**. The tool's `name` and `description` come straight from the
-skill file's YAML frontmatter — unchanged, byte for byte. That description is the whole selection
-mechanism: it is what the model matches against when deciding whether the skill is relevant, which
-mirrors how these skills are designed to activate on context.
+Each selected skill becomes **one tool**, built from the skill file's YAML frontmatter. The
+description is the whole selection mechanism: it is what the model matches against when deciding
+whether the skill is relevant, which mirrors how these skills are designed to activate on context.
+
+Because it carries that weight, the node passes it through with nothing prepended, appended or
+reworded. Two transformations do apply, and both matter only for skills you write yourself:
+
+-   **`description`** is used verbatim **up to 1024 characters** — upstream's own budget. A longer one
+    is cut at the last word boundary and marked with an ellipsis, which can lose the tail of the
+    "Use when …" clause the model routes on. The only signal is a server-log warning. Every bundled
+    description is comfortably inside the budget.
+-   **`name`** is sanitised into a tool name: lowercased, spaces to underscores, anything outside
+    `[a-z0-9_-]` dropped, capped at 64 characters, de-duplicated with `_2`, `_3` on collision. All 24
+    bundled names survive unchanged, so this is a no-op on the bundled library.
 
 Calling the tool performs **progressive disclosure**: it returns that skill's instruction text for
 the agent to follow. Nothing is executed. A skill is text, never code.
@@ -79,8 +89,21 @@ the agent to follow. Nothing is executed. A skill is text, never code.
 | Input                | Type                             | What it does                                                                                                                                                            |
 | -------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Skill Selection**  | `All Skills` / `Selected Skills` | Expose every skill in the directory, or just the ones you pick. Defaults to all.                                                                                        |
-| **Skills**           | multi-select                     | Shown when _Selected Skills_ is chosen. Lists every skill found in the directory. Use the refresh button to re-scan after editing files on disk.                        |
+| **Skills**           | multi-select                     | Shown when _Selected Skills_ is chosen. Lists every skill found in the directory. Refresh re-reads the list, but see the caching note below.                            |
 | **Skills Directory** | string _(Additional Parameters)_ | Absolute path to a directory laid out as `<dir>/<skill-name>/SKILL.md`. Leave empty to use the 24 bundled skills. **See the trust boundary below before setting this.** |
+
+UNC and device paths (`\\host\share`, `\\?\…`) are refused: the server would otherwise open an SMB
+session to a host named by whoever edited the flow, authenticating as the Flowise service account.
+
+#### Caching, and what refresh does
+
+The **list** of skills is cached per directory for **60 seconds**. Within that window, Refresh
+re-reads the cached list, so a skill folder you have just added, removed or renamed may not appear
+for up to a minute. Pointing Skills Directory at a _different_ path is never stale — the cache is
+keyed on the resolved path, so a new path is always a fresh scan.
+
+Skill **bodies** are never cached. Editing the text inside an existing `SKILL.md` takes effect on
+the very next tool call, with no wait.
 
 ### Writing your own skill
 
@@ -117,9 +140,11 @@ and de-duplicated with `_2`, `_3` suffixes on collision.
 
 ### Loading part of a skill
 
-The tool accepts an optional `section` argument. Pass a heading (for example `Verification`) to get
-just that section instead of the whole file; pass an empty string for everything. If the heading is
-absent, the full body is returned — a miss is normal, not an error.
+The tool takes a `section` argument. It is **required** by the schema — OpenAI strict mode demands
+that `required` list every property — so the model must always send it; passing an **empty string**
+is the normal case and means "the whole skill". Pass a heading (for example `Verification`) to get
+just that section instead. If the heading is absent, the full body is returned — a miss is normal,
+not an error.
 
 Resolution tries, in order: exact `##` match, exact `###` match, then a normalised prefix match at
 each level, taking the first occurrence. That ordering is deliberate. In the bundled library

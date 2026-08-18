@@ -20,7 +20,7 @@ guard, a followed symlink, and a silent fallback that swapped a different instru
 agent on a typo'd path. See §5 and the T6a commit.
 
 **Original design note.** Every interface, path, glob and version below
-was read out of the checked-out source at `C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork` (Flowise
+was read out of the checked-out source at `<repo-root>` (Flowise
 **3.1.4**, branch `feat/agent-skills`) or out of the pinned agent-skills checkout
 (`df1edb2e05487d0aa6d93c747141e0aed1187f25`). The starter hypotheses that were wrong have been replaced,
 and each replacement says what it corrects. Remaining unknowns are listed in
@@ -124,7 +124,7 @@ above preserves that arithmetic exactly (`skills-library/skills/<x>/SKILL.md` �
 | `evals/`, `hooks/`, `commands/`, `agents/`, `scripts/`, `docs/`, `.claude-plugin/`, `.codex-plugin/`, `plugin.json`, `.opencode/skills` | Not skill content, and none of it is reachable by the node. `evals/cases/*.json` is a useful Phase-4 fixture set, but the test-engineer needs two or three trigger prompts, which it copies as string literals from `agent-skills-src` — cheaper than vendoring 24 JSON files that nothing reads. `.opencode/skills` is a symlink that materialises on Windows as a 10-byte regular file.                                            |
 
 **Copy mechanics.** Copy file-by-file from the three roots (`skills/`, `references/`, `LICENSE`) of the
-pinned checkout at `C:\Users\bruger1\Desktop\ACLA Agents\agent-skills-src`, minus the one exclusion
+pinned checkout at `<agent-skills-clone>`, minus the one exclusion
 above. That is **35 copied files** — 27 `.md` under `skills/` (24 `SKILL.md` + `idea-refine`'s three
 companions), 7 under `references/`, and `LICENSE` — plus `VENDOR.md`, which we author. Do not follow
 symlinks. Read and write as UTF-8: every one of the 24 skills contains non-ASCII (em-dashes,
@@ -746,7 +746,7 @@ Follows the `JSONPathExtractor.test.ts` idiom (`const { nodeClass } = require('.
    `MASTER_PROMPT.md:154` demands and the only thing that can prove the `__dirname` depth-4 branch:
 
     ```powershell
-    cd "C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork"
+    cd <repo-root>
     pnpm --filter flowise-components clean
     pnpm --filter flowise-components build
     dir packages\components\dist\nodes\tools\AgentSkills     # expect .js, .d.ts, .js.map, agentskills.svg

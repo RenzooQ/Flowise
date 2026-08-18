@@ -64,10 +64,12 @@ at the pinned commit; a root .gitattributes rule keeps the LF blobs intact on Wi
 Apache-2.0 section 4(b) requires modified files to carry prominent notices stating that they were
 changed. This fork's changes are overwhelmingly additive. The complete set is:
 
-  PRE-EXISTING FILES MODIFIED (3):
+  PRE-EXISTING FILES MODIFIED (4):
     .prettierignore ................. one line added, exempting the vendored skills library so the
                                       pretty-quick pre-commit hook cannot silently reformat
                                       third-party content and break byte-fidelity with upstream.
+    README.md ....................... an "Agent Skills" section added, documenting the subsystem,
+                                      its trust boundary and its known routing gaps.
     packages/components/package.json  one dependency added: "js-yaml": "4.1.0" (an exact pin, not a
                                       range — see below).
     pnpm-lock.yaml .................. the corresponding importer entry, 3 lines.
@@ -75,8 +77,16 @@ changed. This fork's changes are overwhelmingly additive. The complete set is:
   FILES ADDED (new, no upstream counterpart):
     NOTICE                                          this file
     .gitattributes                                  one scoped rule for the vendored library
+    docs/**                                         design record, evidence and evaluation
     packages/components/skills-library/**           the vendored MIT skills library
-    packages/components/nodes/tools/AgentSkills/**  the Agent Skills node and its tests
+    packages/components/nodes/tools/AgentSkills/**  the Agent Skills node, its tests and the
+                                                    end-to-end harness under __e2e__/
+
+  This list is checkable rather than asserted, which is the point of stating it — run
+
+    git diff --name-status <upstream-base>...HEAD | grep '^M'
+
+  and it must agree. README.md was missing from this list until it was checked that way.
 
   NOT MODIFIED: no file under packages/server/src/enterprise/ and not
   packages/server/src/IdentityManager.ts — i.e. nothing under the commercial carve-out in (1)(a)

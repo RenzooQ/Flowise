@@ -14,7 +14,7 @@ with its files, the files win and the disagreement is called out.
 | License             | MIT — `LICENSE`, "Copyright (c) 2025 Addy Osmani"                                  |
 | Plugin version      | `0.6.7` (`plugin.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`) |
 | Skills              | 24 directories under `skills/`, each with exactly one `SKILL.md`                   |
-| Local checkout used | `C:\Users\bruger1\Desktop\ACLA Agents\agent-skills-src`                            |
+| Local checkout used | `<agent-skills-clone>`                                                             |
 
 Re-vendoring must pin this SHA. `.gitattributes` is `* text=auto eol=lf`, so a Windows checkout may
 materialise CRLF even though the blobs are LF; the parser must not assume either.

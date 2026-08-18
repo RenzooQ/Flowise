@@ -1,8 +1,17 @@
 # End-to-end evidence — Agent Skills
 
-Run date: **2026-08-18**. Branch `feat/agent-skills`, Flowise 3.1.4, base commit `9291856d`.
+Run date: **2026-08-18**. Flowise 3.1.4, base commit `9291856d`.
 
-**Result: PASS.** Two cases, 17 assertions, all green.
+**Result: PASS.** Two cases, **21 assertions**, all green — re-run on branch
+`fix/agent-skills-hardening` from the committed harness.
+
+> Two corrections to an earlier version of this document, both found by re-running it rather than
+> re-reading it. It claimed **17** assertions, which was the count before the harness grew; the
+> harness emits 21. And the "Reproducing" section pointed at a scratch directory that was in no
+> checkout, so the run was not reproducible by anyone. The harness is now committed — see
+> [Reproducing](#reproducing). Re-running it also exposed a defect in the harness itself, where an
+> assertion scanned for `##` headings while the responder reported `#{1,3}`; that is fixed and the
+> two patterns are commented as needing to stay in step.
 
 ---
 
@@ -208,16 +217,27 @@ rather than merely working in a tree that already had the package installed.
 
 ## Reproducing
 
-```bash
-# 1. start the stub (zero dependencies)
-node <scratch>/stubmodel/server.js 8756
+The harness is committed at
+[`packages/components/nodes/tools/AgentSkills/__e2e__/`](../packages/components/nodes/tools/AgentSkills/__e2e__/),
+which is where it should have been from the start — the commands below originally pointed into a
+scratch directory outside the repository, so nobody but the author could run them.
 
-# 2. build the components package so dist/ is current
+```bash
+cd packages/components/nodes/tools/AgentSkills/__e2e__
+
+# 1. build the components package so dist/ is current
 pnpm --filter flowise-components build
 
-# 3. run
-node <scratch>/e2e/run-e2e.js 8756
+# 2. start the stub (zero dependencies, node:http only)
+node stubmodel/server.js 8756
+
+# 3. run it
+node run-e2e.js 8756
 ```
+
+Every path resolves from the harness's own location, so this works from any clone on any host. Exit
+status is `0` on pass and `1` on failure. Results land in `__e2e__/evidence.txt`, and the stub logs
+every request it received to `__e2e__/stubmodel/requests.log` as an independent observer.
 
 No credential store is required: `getCredentialParam` (`src/utils.ts:689-691`) reads
 `nodeData.inputs[paramName]` before the credential data, so `openRouterApiKey: 'sk-dummy-e2e'` in

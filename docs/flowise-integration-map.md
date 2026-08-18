@@ -1,7 +1,7 @@
 # Flowise Integration Map — Agent Skills node
 
 **Produced by:** `flowise-explorer` (read-only recon), 2026-08-18
-**Target tree:** `C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork` — Flowise **3.1.4**, branch `feat/agent-skills`, upstream `9291856d`.
+**Target tree:** `<repo-root>` — Flowise **3.1.4**, branch `feat/agent-skills`, upstream `9291856d`.
 **Method:** every interface, path and line number below was read out of the checked-out source. Nothing here is
 recalled from memory. Where I could **not** execute a command (this agent has no shell), I say so explicitly and
 give the command the implementer must run to confirm.
@@ -579,7 +579,7 @@ tools = flatten(tools)
 ### 3.7 ⚠️ Tool-name sanitisation — the plan is WRONG about this
 
 `INTEGRATION_PLAN.md:120` says _"Tool names are already sanitized by Flowise to `[a-z0-9_-]`, capped at 64
-chars."_ **That is not true for tools returned by Tool nodes.**
+chars."\_ **That is not true for tools returned by Tool nodes.**
 
 The function exists — `packages/components/nodes/agentflow/Agent/Agent.ts:78-97`:
 
@@ -785,7 +785,7 @@ need no edit.
 ### 5.1 Commands
 
 ```powershell
-# from C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork
+# from the repo root
 pnpm install                                  # node ^24, pnpm ^10.26.0
 pnpm build                                    # turbo run build (6 tasks)
 pnpm --filter flowise-components build        # just components: tsc && gulp   <-- the inner loop
@@ -904,7 +904,7 @@ symlink path resolves to the same directory tree. **I could not execute this** �
 it, from the _built_ tree, with:
 
 ```powershell
-cd "C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork"
+cd <repo-root>
 pnpm --filter flowise-components build
 node -e "const m=require('./packages/components/dist/nodes/tools/AgentSkills/AgentSkills.js'); const n=new m.nodeClass(); n.init({id:'t',inputs:{}},'',{}).then(t=>console.log(Array.isArray(t)?t.length+' tools: '+t.map(x=>x.name).join(','):'1 tool')).catch(e=>{console.error(e);process.exit(1)})"
 ```
@@ -1233,7 +1233,7 @@ packages/components/skills-library/     # vendored copy, package ROOT (not under
     (`Agent.ts:618`).
 15. **Build and prove it from the BUILT tree:**
     ```powershell
-    cd "C:\Users\bruger1\Desktop\ACLA Agents\flowise-fork"
+    cd <repo-root>
     pnpm --filter flowise-components clean
     pnpm --filter flowise-components build
     dir packages\components\dist\nodes\tools\AgentSkills          # expect .js, .d.ts, .js.map, .svg

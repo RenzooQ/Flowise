@@ -1,3 +1,6 @@
 # Written by stubmodel/server.js on every run — evidence of one local run, not a source artifact.
 stubmodel/requests.log
 stubmodel/stub.out
+
+# Rebuilt on demand by build-selection-dataset.js from upstream fixtures + the built node.
+selection-dataset.json

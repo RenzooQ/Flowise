@@ -5,11 +5,13 @@ import {
     buildSkillIndex,
     clearSkillIndexCache,
     getSkillIndex,
+    isRemoteOrDevicePath,
     loadSkillBody,
     MAX_SKILL_DIR_ENTRIES,
     MAX_SKILL_FILE_BYTES,
     resolveSkillsDir,
-    sanitizeToolName
+    sanitizeToolName,
+    skillsDirCandidates
 } from './registry'
 
 const VENDORED_DIR = path.join(__dirname, '..', '..', '..', 'skills-library', 'skills')
@@ -401,6 +403,71 @@ describe('AgentSkills registry', () => {
             }
             expect(await readsFor(dirs[19])).toBe(0)
             expect(await readsFor(dirs[0])).toBeGreaterThan(0)
+        })
+    })
+
+    describe('UNC and device paths are refused before any filesystem call', () => {
+        // The Skills Directory input reaches resolveSkillsDir from any flow editor. path.resolve and
+        // path.join preserve a UNC prefix verbatim, so an unchecked value would be handed to fs.stat
+        // and, on Windows, make the SMB redirector authenticate outbound as the service account.
+        const refused = [
+            '\\\\attacker.example\\share\\skills',
+            '\\\\?\\C:\\Windows',
+            '\\\\.\\pipe\\something',
+            '//attacker.example/share/skills',
+            '\\/mixed/separators'
+        ]
+
+        it.each(refused)('classifies %j as remote or device', (candidate) => {
+            expect(isRemoteOrDevicePath(candidate)).toBe(true)
+        })
+
+        it.each(['C:\\Users\\me\\skills', '/home/me/skills', './relative/skills', 'skills'])(
+            'leaves ordinary path %j alone',
+            (candidate) => {
+                expect(isRemoteOrDevicePath(candidate)).toBe(false)
+            }
+        )
+
+        it('returns "" for a UNC override without ever touching the filesystem', async () => {
+            const statSpy = jest.spyOn(fs.promises, 'stat')
+            expect(await resolveSkillsDir('\\\\attacker.example\\share\\skills')).toBe('')
+            // The point of the guard is that no connection attempt happens at all.
+            expect(statSpy).not.toHaveBeenCalled()
+            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('UNC or device path'))
+            statSpy.mockRestore()
+        })
+
+        it('makes init() fail visibly rather than silently serving the bundled skills', async () => {
+            // Falling back to the bundled library would hand the agent a DIFFERENT instruction set
+            // than the flow author asked for, with only a server-log line to say so.
+            const index = await getSkillIndex('\\\\attacker.example\\share\\skills')
+            expect(index.skills).toHaveLength(0)
+        })
+    })
+
+    describe('built-tree resolution (the candidate no test used to reach)', () => {
+        // Under jest __dirname is the source layout, so the first candidate always hits and the
+        // built-tree entry is never evaluated. Deleting it would leave every test green and every
+        // built install throwing "no skills found", so it is asserted directly here.
+        const subpath = path.join('skills-library', 'skills')
+
+        it('resolves the vendored library from the SOURCE layout', () => {
+            const base = path.join('/repo', 'packages', 'components', 'nodes', 'tools', 'AgentSkills')
+            const expected = path.resolve(path.join('/repo', 'packages', 'components', subpath))
+            expect(skillsDirCandidates(base).map((c) => path.resolve(c))).toContain(expected)
+        })
+
+        it('resolves the vendored library from the BUILT layout', () => {
+            const base = path.join('/repo', 'packages', 'components', 'dist', 'nodes', 'tools', 'AgentSkills')
+            const expected = path.resolve(path.join('/repo', 'packages', 'components', subpath))
+            expect(skillsDirCandidates(base).map((c) => path.resolve(c))).toContain(expected)
+        })
+
+        it('actually finds the real bundled library on disk from this module location', async () => {
+            const resolved = await resolveSkillsDir()
+            expect(resolved).not.toBe('')
+            expect(fs.existsSync(path.join(resolved, 'using-agent-skills', 'SKILL.md'))).toBe(true)
         })
     })
 })

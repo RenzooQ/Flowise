@@ -59,6 +59,23 @@ const evictOldestIndexes = (): void => {
 
 const warn = (message: string): void => console.warn(`[AgentSkills] ${message}`)
 
+/**
+ * Refuse a UNC share (`\\host\share`) or a Win32 device path (`\\?\...`, `\\.\...`).
+ *
+ * The Skills Directory input reaches here from any flow editor, via
+ * POST /api/v1/node-load-method. `path.resolve` and `path.join` preserve a UNC prefix verbatim, so
+ * without this the string goes straight to `fs.stat`, and on Windows the SMB redirector opens a
+ * session to the named host and authenticates implicitly as the Flowise service account — handing
+ * whoever named the host a NetNTLMv2 hash to crack or relay. The host does not have to exist for
+ * the connection attempt to happen, and no skill ever has to load.
+ *
+ * The check is applied on every platform rather than gated on process.platform. A `\\`-prefixed
+ * path is meaningless on POSIX, and while `//foo` is a legal POSIX path that collapses to `/foo`,
+ * nothing sane points a skills directory at one. Refusing everywhere keeps one rule and one test,
+ * instead of a rule that only holds on the platform where the consequence is worst.
+ */
+export const isRemoteOrDevicePath = (candidate: string): boolean => /^[\\/]{2}/.test(candidate)
+
 const isDirectory = async (candidate: string): Promise<boolean> => {
     try {
         return (await fs.promises.stat(candidate)).isDirectory()
@@ -66,6 +83,27 @@ const isDirectory = async (candidate: string): Promise<boolean> => {
         return false
     }
 }
+
+/**
+ * Candidate locations of the vendored library, relative to this module's own directory.
+ *
+ * Pure and exported so both depths are testable. Under jest `__dirname` is the source layout, so
+ * the first candidate hits and the loop returns before ever evaluating the second — the one the
+ * BUILT product depends on. Left inline, that entry could be deleted or reordered with every test
+ * still green while every user of a built install got "no skills found". Taking `baseDir` as an
+ * argument is what lets a test pin the dist depth explicitly.
+ *
+ *   dev / jest   packages/components/nodes/tools/AgentSkills          -> 3 levels up
+ *   built        packages/components/dist/nodes/tools/AgentSkills     -> 4 levels up
+ *
+ * The extra fifth-level candidate is kept as slack for layouts this project does not produce,
+ * matching how `src/modelLoader.ts` and `src/utils.ts` probe rather than assume a single depth.
+ */
+export const skillsDirCandidates = (baseDir: string): string[] => [
+    path.join(baseDir, '..', '..', '..', VENDORED_SKILLS_SUBPATH),
+    path.join(baseDir, '..', '..', '..', '..', VENDORED_SKILLS_SUBPATH),
+    path.join(baseDir, '..', '..', '..', '..', '..', VENDORED_SKILLS_SUBPATH)
+]
 
 /**
  * Resolve the directory holding the skills.
@@ -89,17 +127,16 @@ const isDirectory = async (candidate: string): Promise<boolean> => {
 export const resolveSkillsDir = async (override?: string): Promise<string> => {
     const trimmed = (override ?? '').trim()
     if (trimmed) {
+        if (isRemoteOrDevicePath(trimmed)) {
+            warn(`skills directory override "${trimmed}" is a UNC or device path and was refused`)
+            return ''
+        }
         if (await isDirectory(trimmed)) return path.resolve(trimmed)
         warn(`skills directory override "${trimmed}" is not a readable directory`)
         return ''
     }
 
-    const candidates = [
-        path.join(__dirname, '..', '..', '..', VENDORED_SKILLS_SUBPATH),
-        path.join(__dirname, '..', '..', '..', '..', VENDORED_SKILLS_SUBPATH),
-        path.join(__dirname, '..', '..', '..', '..', '..', VENDORED_SKILLS_SUBPATH)
-    ]
-    for (const candidate of candidates) {
+    for (const candidate of skillsDirCandidates(__dirname)) {
         if (await isDirectory(candidate)) return path.resolve(candidate)
     }
     return ''

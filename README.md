@@ -25,6 +25,7 @@ English | [繁體中文](./i18n/README-TW.md) | [简体中文](./i18n/README-ZH.
 
 ## 📚 Table of Contents
 
+-   [🧠 Agent Skills](#-agent-skills) ← added by this fork
 -   [⚡ Quick Start](#-quick-start)
 -   [🐳 Docker](#-docker)
 -   [👨‍💻 Developers](#-developers)
@@ -35,6 +36,141 @@ English | [繁體中文](./i18n/README-TW.md) | [简体中文](./i18n/README-ZH.
 -   [🙋 Support](#-support)
 -   [🙌 Contributing](#-contributing)
 -   [📄 License](#-license)
+
+## 🧠 Agent Skills
+
+This fork adds an **Agent Skills** node to the **Tools** category. It turns a directory of Markdown
+skill files into callable tools, so an Agent can decide _for itself_ when a skill applies and load
+its instructions on demand.
+
+24 skills from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT) ship with
+the fork, vendored at `packages/components/skills-library/`.
+
+### How it works
+
+Each selected skill becomes **one tool**. The tool's `name` and `description` come straight from the
+skill file's YAML frontmatter — unchanged, byte for byte. That description is the whole selection
+mechanism: it is what the model matches against when deciding whether the skill is relevant, which
+mirrors how these skills are designed to activate on context.
+
+Calling the tool performs **progressive disclosure**: it returns that skill's instruction text for
+the agent to follow. Nothing is executed. A skill is text, never code.
+
+```
+┌──────────────┐        ┌───────────────┐        ┌──────────────────────┐
+│  Chat Model  │───────▶│  Tool Agent   │◀───────│  Agent Skills (Tools)│
+└──────────────┘        └───────────────┘        └──────────────────────┘
+                               │                            │
+                               │  "write a spec for X"      │  24 tools, one per skill
+                               ▼                            ▼
+                     model picks a skill tool  ──▶  returns that SKILL.md's body
+```
+
+### Adding it to a flow
+
+1. Drag **Tools → Agent Skills** onto the canvas.
+2. Connect its output to an Agent node's **Tools** input (the classic _Tool Agent_, or the
+   AgentFlow v2 _Agent_).
+3. Leave **Skill Selection** on `All Skills` to expose all 24, or switch to `Selected Skills` and
+   pick a subset from the dropdown.
+
+### Inputs
+
+| Input                | Type                             | What it does                                                                                                                                                            |
+| -------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Skill Selection**  | `All Skills` / `Selected Skills` | Expose every skill in the directory, or just the ones you pick. Defaults to all.                                                                                        |
+| **Skills**           | multi-select                     | Shown when _Selected Skills_ is chosen. Lists every skill found in the directory. Use the refresh button to re-scan after editing files on disk.                        |
+| **Skills Directory** | string _(Additional Parameters)_ | Absolute path to a directory laid out as `<dir>/<skill-name>/SKILL.md`. Leave empty to use the 24 bundled skills. **See the trust boundary below before setting this.** |
+
+### Writing your own skill
+
+Create `<your-skills-dir>/<skill-name>/SKILL.md`. Only the frontmatter is required:
+
+```markdown
+---
+name: my-custom-skill
+description: What this skill does, and when to use it. The model reads this to decide whether to
+    call the tool, so describe the trigger conditions concretely — e.g. "Use when the user asks to
+    review a database migration."
+---
+
+# My Custom Skill
+
+## Overview
+
+Everything after the frontmatter is returned verbatim when the tool is called.
+```
+
+Rules the parser enforces:
+
+-   `name` and `description` must both be non-empty strings. Anything else is skipped with a warning
+    rather than crashing the node.
+-   The file must be named exactly `SKILL.md`, exactly one directory below the skills root. Nothing
+    else is ever opened.
+-   Section headings are optional. There is no required structure — the whole body after the
+    frontmatter is what the tool returns by default.
+
+Point **Skills Directory** at the parent directory, then hit refresh on the **Skills** input.
+
+Tool names are derived from `name`, lowercased and reduced to `[a-z0-9_-]`, capped at 64 characters,
+and de-duplicated with `_2`, `_3` suffixes on collision.
+
+### Loading part of a skill
+
+The tool accepts an optional `section` argument. Pass a heading (for example `Verification`) to get
+just that section instead of the whole file; pass an empty string for everything. If the heading is
+absent, the full body is returned — a miss is normal, not an error.
+
+Resolution tries, in order: exact `##` match, exact `###` match, then a normalised prefix match at
+each level, taking the first occurrence. That ordering is deliberate. In the bundled library
+`test-driven-development` has both `## When to Use` and `## When to Use Subagents for Testing`, so
+exact must beat prefix; `idea-refine` puts `### Process` at H3; and `security-and-hardening` writes
+`## Process: Threat Model First`, which only a prefix match will find.
+
+### ⚠️ Trust boundary — read this
+
+**Skill text becomes instructions to an agent that holds real, side-effecting tools. Whoever can
+write into the skills directory can steer any agent this node is attached to** — including which
+tools it calls and with what arguments.
+
+The **Skills Directory** input is the live vector: any flow editor can repoint it at any directory
+the server process can read.
+
+What the node does about it:
+
+-   Skill text is returned **delimited and labelled as untrusted reference material**, inside an
+    `<agent-skill>` element with an explicit "REFERENCE MATERIAL — NOT AN INSTRUCTION" preamble, so a
+    model is told what it is reading.
+-   Attempts to forge the closing markers from inside a skill body are escaped, so a body cannot end
+    the quoted region early and have the rest read as trusted narration.
+-   Only files named `SKILL.md` are opened, only one directory deep, symlinks are refused, at most
+    500 entries are scanned, and files above 1 MB are skipped. It is not a general file reader.
+-   Nothing read from disk is ever evaluated, compiled or executed. No `eval`, no `new Function`, no
+    `child_process`. This is enforced by a test, not just a promise.
+
+What it does **not** do: it cannot tell a good instruction from a malicious one. Treat a skills
+directory with the same care you would give the agent's system prompt.
+
+For context on scale: a flow editor in stock Flowise can already add a _Custom Tool_ that executes
+arbitrary server-side JavaScript. This node does not introduce a new privilege class for flow
+editors — but it deliberately avoids widening the existing one.
+
+### Operational notes
+
+-   **Use an Agent node, not the standalone AgentFlow v2 _Tool_ node.** That node invokes every tool
+    in an array with the same arguments and joins the results, which would fire all 24 skills at once.
+-   **Leave "Require Human Input" off.** When a user rejects one tool call, Flowise strips every tool
+    sharing the same source node — so rejecting a single skill removes all of them for the rest of
+    the run.
+
+### Licensing
+
+The bundled skills are MIT, © 2025 Addy Osmani, pinned at upstream commit `df1edb2e`. Their license
+is reproduced verbatim at `packages/components/skills-library/LICENSE`, and provenance is recorded
+in `packages/components/skills-library/VENDOR.md`. See the root `NOTICE` for the full picture,
+including Flowise's own dual license.
+
+---
 
 ## ⚡Quick Start
 
@@ -240,4 +376,14 @@ See [Contributing Guide](CONTRIBUTING.md). Reach out to us at [Discord](https://
 
 ## 📄 License
 
-Source code in this repository is made available under the [Apache License Version 2.0](LICENSE.md).
+Flowise is **dual-licensed**, not plain Apache-2.0: the bulk of the source is under the
+[Apache License Version 2.0](LICENSE.md), while everything under `packages/server/src/enterprise/`
+plus any individually-noticed file (in this tree, `packages/server/src/IdentityManager.ts`) is under
+the [FlowiseAI Commercial License](packages/server/src/enterprise/LICENSE.md), which permits
+production use only with an Enterprise subscription. Local building, modification and testing are
+expressly permitted.
+
+This fork additionally vendors the MIT-licensed [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
+library at `packages/components/skills-library/`.
+
+See [`NOTICE`](NOTICE) for the full statement, the exact file counts, and the list of files this fork modified.

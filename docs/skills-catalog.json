@@ -1,0 +1,848 @@
+[
+    {
+        "folder": "api-and-interface-design",
+        "name": "api-and-interface-design",
+        "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface. Use when creating REST or GraphQL endpoints, defining type contracts between modules, or establishing boundaries between frontend and backend.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Core Principles",
+            "REST API Patterns",
+            "TypeScript Interface Patterns",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3626,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/api-and-interface-design/SKILL.md",
+        "title": "API and Interface Design",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "api-and-interface-design",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 251,
+        "body_chars": 14502,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "browser-testing-with-devtools",
+        "name": "browser-testing-with-devtools",
+        "description": "Tests in real browsers via Chrome DevTools MCP. Use when building or debugging anything that runs in a browser. Use when you need to inspect the DOM, capture console errors, analyze network requests, profile performance, or verify visual output with real runtime data. Requires the chrome-devtools MCP server to be configured.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Setting Up Chrome DevTools MCP",
+            "Security Boundaries",
+            "The DevTools Debugging Workflow",
+            "Writing Test Plans for Complex UI Bugs",
+            "Screenshot-Based Verification",
+            "Console Analysis Patterns",
+            "Accessibility Verification with DevTools",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3388,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/browser-testing-with-devtools/SKILL.md",
+        "title": "Browser Testing with DevTools",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "browser-testing-with-devtools",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 326,
+        "body_chars": 13551,
+        "unresolved_refs": [".mcp.json"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "ci-cd-and-automation",
+        "name": "ci-cd-and-automation",
+        "description": "Automates CI/CD pipeline setup. Use when setting up or modifying build and deployment pipelines. Use when you need to automate quality gates, configure test runners in CI, or establish deployment strategies.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Quality Gate Pipeline",
+            "GitHub Actions Configuration",
+            "Feeding CI Failures Back to Agents",
+            "Deployment Strategies",
+            "Environment Management",
+            "Automation Beyond CI",
+            "CI Optimization",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 2688,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/ci-cd-and-automation/SKILL.md",
+        "title": "CI/CD and Automation",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "ci-cd-and-automation",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 207,
+        "body_chars": 10752,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "code-review-and-quality",
+        "name": "code-review-and-quality",
+        "description": "Conducts multi-axis code review. Use before merging any change. Use when reviewing code written by yourself, another agent, or a human. Use when you need to assess code quality across multiple dimensions before it enters the main branch.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Five-Axis Review",
+            "Structural Remedies",
+            "Change Sizing",
+            "Change Descriptions",
+            "Review Process",
+            "Multi-Model Review Pattern",
+            "Dead Code Hygiene",
+            "Review Speed",
+            "Handling Disagreements",
+            "Honesty in Review",
+            "Dependency Discipline",
+            "The Review Checklist",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/performance-checklist.md",
+                "resolved": "references/performance-checklist.md"
+            },
+            {
+                "ref": "../../references/security-checklist.md",
+                "resolved": "references/security-checklist.md"
+            }
+        ],
+        "approx_tokens": 5047,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/code-review-and-quality/SKILL.md",
+        "title": "Code Review and Quality",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "code-review-and-quality",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 237,
+        "body_chars": 20188,
+        "unresolved_refs": ["package.json"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "code-simplification",
+        "name": "code-simplification",
+        "description": "Simplifies code for clarity. Use when refactoring code for clarity without changing behavior. Use when code works but is harder to read, maintain, or extend than it should be. Use when reviewing code that has accumulated unnecessary complexity.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Five Principles",
+            "The Simplification Process",
+            "Language-Specific Guidance",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3302,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/code-simplification/SKILL.md",
+        "title": "Code Simplification",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "code-simplification",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 244,
+        "body_chars": 13205,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "context-engineering",
+        "name": "context-engineering",
+        "description": "Optimizes agent context setup. Use when starting a new session, when agent output quality degrades, when switching between tasks, or when you need to configure rules files and context for a project.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Context Hierarchy",
+            "Context Packing Strategies",
+            "MCP Integrations",
+            "Confusion Management",
+            "Anti-Patterns",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "AGENTS.md",
+                "resolved": "AGENTS.md"
+            }
+        ],
+        "approx_tokens": 2575,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/context-engineering/SKILL.md",
+        "title": "Context Engineering",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "context-engineering",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 198,
+        "body_chars": 10298,
+        "unresolved_refs": [".github/copilot-instructions.md"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "debugging-and-error-recovery",
+        "name": "debugging-and-error-recovery",
+        "description": "Guides systematic root-cause debugging. Use when tests fail, builds break, behavior doesn't match expectations, or you encounter any unexpected error. Use when you need a systematic approach to finding and fixing the root cause rather than guessing.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Stop-the-Line Rule",
+            "The Triage Checklist",
+            "Error-Specific Patterns",
+            "Safe Fallback Patterns",
+            "Instrumentation Guidelines",
+            "Common Rationalizations",
+            "Treating Error Output as Untrusted Data",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 2542,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/debugging-and-error-recovery/SKILL.md",
+        "title": "Debugging and Error Recovery",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "debugging-and-error-recovery",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 249,
+        "body_chars": 10165,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "deprecation-and-migration",
+        "name": "deprecation-and-migration",
+        "description": "Manages deprecation and migration. Use when removing old systems, APIs, or features. Use when migrating users from one implementation to another. Use when deciding whether to maintain or sunset existing code.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Core Principles",
+            "The Deprecation Decision",
+            "Compulsory vs Advisory Deprecation",
+            "The Migration Process",
+            "Migration Patterns",
+            "Zombie Code",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3037,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/deprecation-and-migration/SKILL.md",
+        "title": "Deprecation and Migration",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "deprecation-and-migration",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 208,
+        "body_chars": 12146,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "documentation-and-adrs",
+        "name": "documentation-and-adrs",
+        "description": "Records decisions and documentation. Use when making architectural decisions, changing public APIs, shipping features, or when you need to record context that future engineers and agents will need to understand the codebase.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Architecture Decision Records (ADRs)",
+            "Inline Documentation",
+            "API Documentation",
+            "README Structure",
+            "Changelog Maintenance",
+            "Documentation for Agents",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 2369,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/documentation-and-adrs/SKILL.md",
+        "title": "Documentation and ADRs",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "documentation-and-adrs",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 224,
+        "body_chars": 9473,
+        "unresolved_refs": ["0004-title.md"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "doubt-driven-development",
+        "name": "doubt-driven-development",
+        "description": "Subjects every non-trivial decision to a fresh-context adversarial review before it stands. Use when correctness matters more than speed, when working in unfamiliar code, when stakes are high (production, security-sensitive logic, irreversible operations), or any time a confident output would be cheaper to verify now than to debug later.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Loading Constraints",
+            "The Process",
+            "Common Rationalizations",
+            "Red Flags",
+            "Interaction with Other Skills",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/orchestration-patterns.md",
+                "resolved": "references/orchestration-patterns.md"
+            }
+        ],
+        "approx_tokens": 4005,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/doubt-driven-development/SKILL.md",
+        "title": "Doubt-Driven Development",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "doubt-driven-development",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 339,
+        "body_chars": 16017,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "frontend-ui-engineering",
+        "name": "frontend-ui-engineering",
+        "description": "Builds production-quality, accessible, responsive user-facing UIs. Use when building or modifying interfaces and pages, creating components, implementing layouts, meeting WCAG accessibility requirements, managing state, or when the output needs to look and feel production-quality rather than AI-generated.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Component Architecture",
+            "State Management",
+            "Design System Adherence",
+            "Accessibility (WCAG 2.1 AA)",
+            "Responsive Design",
+            "Loading and Transitions",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/accessibility-checklist.md",
+                "resolved": "references/accessibility-checklist.md"
+            }
+        ],
+        "approx_tokens": 2581,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/frontend-ui-engineering/SKILL.md",
+        "title": "Frontend UI Engineering",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "frontend-ui-engineering",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 306,
+        "body_chars": 10321,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "git-workflow-and-versioning",
+        "name": "git-workflow-and-versioning",
+        "description": "Structures git workflow practices. Use when making any code change. Use when committing, branching, resolving conflicts, or when you need to organize work across multiple parallel streams. Use when cutting a release, choosing a semantic version bump, tagging, or writing a changelog.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Core Principles",
+            "Branching Strategy",
+            "Working with Worktrees",
+            "The Save Point Pattern",
+            "Change Summaries",
+            "Pre-Commit Hygiene",
+            "Handling Generated Files",
+            "Using Git for Debugging",
+            "Release & Versioning",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3346,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/git-workflow-and-versioning/SKILL.md",
+        "title": "Git Workflow and Versioning",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "git-workflow-and-versioning",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 283,
+        "body_chars": 13383,
+        "unresolved_refs": [".vscode/settings.json", "package-lock.json"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "idea-refine",
+        "name": "idea-refine",
+        "description": "Refines raw ideas into sharp, actionable concepts through structured divergent and convergent thinking. Use when an idea is still vague, when you need to stress-test assumptions before committing to a plan, or when you want to expand options before converging on one. Triggers on \"ideate\", \"refine this idea\", or \"stress-test my plan\".",
+        "sections": ["How It Works", "Usage", "Output", "Detailed Instructions", "Red Flags", "Verification"],
+        "files": [
+            {
+                "ref": "examples.md",
+                "resolved": "skills/idea-refine/examples.md"
+            },
+            {
+                "ref": "frameworks.md",
+                "resolved": "skills/idea-refine/frameworks.md"
+            },
+            {
+                "ref": "refinement-criteria.md",
+                "resolved": "skills/idea-refine/refinement-criteria.md"
+            },
+            {
+                "ref": null,
+                "resolved": "skills/idea-refine/scripts/idea-refine.sh"
+            }
+        ],
+        "approx_tokens": 1927,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/idea-refine/SKILL.md",
+        "title": "Idea Refine",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "idea-refine",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 335,
+        "body_chars": 7708,
+        "unresolved_refs": [],
+        "lint_section_exempt": true,
+        "missing_required_sections": ["Overview", "When to Use", "Common Rationalizations"]
+    },
+    {
+        "folder": "incremental-implementation",
+        "name": "incremental-implementation",
+        "description": "Delivers changes incrementally. Use when implementing any feature or change that touches more than one file. Use when you're about to write a large amount of code at once, or when a task feels too big to land in one step.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Increment Cycle",
+            "Slicing Strategies",
+            "Implementation Rules",
+            "Working with Agents",
+            "Increment Checklist",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification",
+            "See Also"
+        ],
+        "files": [
+            {
+                "ref": "../../references/definition-of-done.md",
+                "resolved": "references/definition-of-done.md"
+            }
+        ],
+        "approx_tokens": 2233,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/incremental-implementation/SKILL.md",
+        "title": "Incremental Implementation",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "incremental-implementation",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 221,
+        "body_chars": 8931,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "interview-me",
+        "name": "interview-me",
+        "description": "Extracts what the user actually wants instead of what they think they should want. Achieves this through one-question-at-a-time interview until ~95% confidence about the underlying intent. Use when an ask is underspecified (\"build me X\" without \"for whom\" or \"why now\"), when the user explicitly invokes (\"interview me\", \"grill me\", \"are we sure?\", \"stress-test my thinking\"), or when you catch yourself silently filling in ambiguous requirements before any plan, spec, or code exists.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Loading Constraints",
+            "The Process",
+            "Output",
+            "Example",
+            "Interaction with Other Skills",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [],
+        "approx_tokens": 3447,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/interview-me/SKILL.md",
+        "title": "Interview Me",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "interview-me",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 485,
+        "body_chars": 13787,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "observability-and-instrumentation",
+        "name": "observability-and-instrumentation",
+        "description": "Instruments code so production behavior is visible and diagnosable. Use when adding logging, metrics, tracing, or alerting. Use when shipping any feature that runs in production and you need evidence it works. Use when production issues are reported but you can't tell what happened from the available data.",
+        "sections": ["Overview", "When to Use", "Process", "Common Rationalizations", "Red Flags", "Verification"],
+        "files": [
+            {
+                "ref": "../../references/observability-checklist.md",
+                "resolved": "references/observability-checklist.md"
+            }
+        ],
+        "approx_tokens": 2660,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/observability-and-instrumentation/SKILL.md",
+        "title": "Observability and Instrumentation",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "observability-and-instrumentation",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 307,
+        "body_chars": 10640,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "performance-optimization",
+        "name": "performance-optimization",
+        "description": "Optimizes application performance across frontend, backend, queries, and databases. Use when performance requirements exist, when you suspect performance regressions, when Core Web Vitals or load times need improvement, when N+1 query patterns need fixing, or when profiling reveals bottlenecks.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Core Web Vitals Targets",
+            "The Optimization Workflow",
+            "Performance Budget",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/performance-checklist.md",
+                "resolved": "references/performance-checklist.md"
+            }
+        ],
+        "approx_tokens": 3653,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/performance-optimization/SKILL.md",
+        "title": "Performance Optimization",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "performance-optimization",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 295,
+        "body_chars": 14609,
+        "unresolved_refs": ["PERF.md"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "planning-and-task-breakdown",
+        "name": "planning-and-task-breakdown",
+        "description": "Breaks work into ordered tasks. Use when you have a spec or clear requirements and need to break work into implementable tasks. Use when a task feels too large to start, when you need to estimate scope, or when parallel work is possible.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Planning Process",
+            "Task Sizing Guidelines",
+            "Output Files",
+            "Plan Document Template",
+            "Parallelization Opportunities",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification",
+            "See Also"
+        ],
+        "files": [
+            {
+                "ref": "AGENTS.md",
+                "resolved": "AGENTS.md"
+            },
+            {
+                "ref": "CLAUDE.md",
+                "resolved": "CLAUDE.md"
+            },
+            {
+                "ref": "../../references/definition-of-done.md",
+                "resolved": "references/definition-of-done.md"
+            }
+        ],
+        "approx_tokens": 2268,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/planning-and-task-breakdown/SKILL.md",
+        "title": "Planning and Task Breakdown",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "planning-and-task-breakdown",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 237,
+        "body_chars": 9069,
+        "unresolved_refs": ["src/path/to/file.ts", "tasks/plan.md", "tasks/todo.md", "tests/path/to/test.ts"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "security-and-hardening",
+        "name": "security-and-hardening",
+        "description": "Hardens code against vulnerabilities. Use when handling user input, authentication, data storage, or external integrations. Use when building any feature that accepts untrusted data, manages user sessions, or interacts with third-party services. Use when personal data or privacy compliance (GDPR, CCPA) is involved.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Process: Threat Model First",
+            "The Three-Tier Boundary System",
+            "OWASP Top 10 Prevention Patterns",
+            "Input Validation Patterns",
+            "Triaging Dependency Audit Results",
+            "Rate Limiting",
+            "Secrets Management",
+            "Data Privacy & Compliance",
+            "Securing AI / LLM Features",
+            "Security Review Checklist",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/security-checklist.md",
+                "resolved": "references/security-checklist.md"
+            }
+        ],
+        "approx_tokens": 5915,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/security-and-hardening/SKILL.md",
+        "title": "Security and Hardening",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "security-and-hardening",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 316,
+        "body_chars": 23659,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "shipping-and-launch",
+        "name": "shipping-and-launch",
+        "description": "Prepares production launches. Use when preparing to deploy to production. Use when you need a pre-launch checklist, when setting up monitoring, when planning a staged rollout, or when you need a rollback strategy.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Pre-Launch Checklist",
+            "Feature Flag Strategy",
+            "Staged Rollout",
+            "Monitoring and Observability",
+            "Rollback Strategy",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/accessibility-checklist.md",
+                "resolved": "references/accessibility-checklist.md"
+            },
+            {
+                "ref": "../../references/definition-of-done.md",
+                "resolved": "references/definition-of-done.md"
+            },
+            {
+                "ref": "../../references/performance-checklist.md",
+                "resolved": "references/performance-checklist.md"
+            },
+            {
+                "ref": "../../references/security-checklist.md",
+                "resolved": "references/security-checklist.md"
+            }
+        ],
+        "approx_tokens": 2423,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/shipping-and-launch/SKILL.md",
+        "title": "Shipping and Launch",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "shipping-and-launch",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 213,
+        "body_chars": 9690,
+        "unresolved_refs": [],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "source-driven-development",
+        "name": "source-driven-development",
+        "description": "Grounds every implementation decision in official documentation. Use when you want authoritative, source-cited code free from outdated patterns. Use when building with any framework or library where correctness matters.",
+        "sections": ["Overview", "When to Use", "The Process", "Common Rationalizations", "Red Flags", "Verification"],
+        "files": [],
+        "approx_tokens": 2401,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/source-driven-development/SKILL.md",
+        "title": "Source-Driven Development",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "source-driven-development",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 219,
+        "body_chars": 9602,
+        "unresolved_refs": ["package.json"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "spec-driven-development",
+        "name": "spec-driven-development",
+        "description": "Creates specs before coding. Use when starting a new project, feature, or significant change and no specification exists yet. Use when requirements are unclear, ambiguous, or only exist as a vague idea. Use when a single requirement spans several independently testable capabilities and needs decomposing into a capability map of modules before specifying.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "The Gated Workflow",
+            "Keeping the Spec Alive",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "skills/context-engineering/SKILL.md",
+                "resolved": "skills/context-engineering/SKILL.md"
+            },
+            {
+                "ref": "skills/incremental-implementation/SKILL.md",
+                "resolved": "skills/incremental-implementation/SKILL.md"
+            },
+            {
+                "ref": "skills/test-driven-development/SKILL.md",
+                "resolved": "skills/test-driven-development/SKILL.md"
+            }
+        ],
+        "approx_tokens": 2914,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/spec-driven-development/SKILL.md",
+        "title": "Spec-Driven Development",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "spec-driven-development",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 356,
+        "body_chars": 11655,
+        "unresolved_refs": ["SPEC-billing.md", "SPEC-identity.md", "tasks/plan.md", "tasks/todo.md"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "test-driven-development",
+        "name": "test-driven-development",
+        "description": "Drives development with tests. Use when implementing any logic, fixing any bug, or changing any behavior. Use when you need to prove that code works, when a bug report arrives, or when you're about to modify existing functionality.",
+        "sections": [
+            "Overview",
+            "When to Use",
+            "Discover the Stack First",
+            "The TDD Cycle",
+            "The Prove-It Pattern (Bug Fixes)",
+            "The Test Pyramid",
+            "Writing Good Tests",
+            "Test Anti-Patterns to Avoid",
+            "Browser Testing with DevTools",
+            "When to Use Subagents for Testing",
+            "See Also",
+            "Common Rationalizations",
+            "Red Flags",
+            "Verification"
+        ],
+        "files": [
+            {
+                "ref": "../../references/testing-patterns.md",
+                "resolved": "references/testing-patterns.md"
+            }
+        ],
+        "approx_tokens": 3993,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/test-driven-development/SKILL.md",
+        "title": "Test-Driven Development",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "test-driven-development",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 231,
+        "body_chars": 15972,
+        "unresolved_refs": ["package.json"],
+        "lint_section_exempt": false,
+        "missing_required_sections": []
+    },
+    {
+        "folder": "using-agent-skills",
+        "name": "using-agent-skills",
+        "description": "Discovers and invokes agent skills. Use when starting a session or when you need to discover which skill applies to the current task. This is the meta-skill that governs how all other skills are discovered and invoked.",
+        "sections": [
+            "Overview",
+            "Skill Discovery",
+            "Core Operating Behaviors",
+            "Failure Modes to Avoid",
+            "Skill Rules",
+            "Lifecycle Sequence",
+            "Quick Reference"
+        ],
+        "files": [
+            {
+                "ref": "../../references/definition-of-done.md",
+                "resolved": "references/definition-of-done.md"
+            }
+        ],
+        "approx_tokens": 2357,
+        "source_commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
+        "path": "skills/using-agent-skills/SKILL.md",
+        "title": "Using Agent Skills",
+        "frontmatter_keys": ["name", "description"],
+        "name_matches_folder": true,
+        "sanitized_tool_name": "using-agent-skills",
+        "tool_name_survives_sanitization": true,
+        "description_chars": 218,
+        "body_chars": 9426,
+        "unresolved_refs": [],
+        "lint_section_exempt": true,
+        "missing_required_sections": ["When to Use", "Common Rationalizations", "Red Flags", "Verification"]
+    }
+]
